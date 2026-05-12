@@ -3,8 +3,8 @@ import { getNoteBySlug, getAllNotes } from "@/lib/mdx";
 import LocalNoteDetail from "@/components/notes/LocalNoteDetail";
 import { NoteDetailClient } from "@/components/notes/NoteDetailClient";
 
-// Static export mode requires dynamicParams = false
-export const dynamicParams = false;
+// Allow dynamic slugs not pre-generated at build time
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   const notes = getAllNotes();
