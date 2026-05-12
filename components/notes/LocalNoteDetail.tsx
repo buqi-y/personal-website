@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { ArrowLeft, Pencil, Calendar, Clock, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NoteEditor, type NoteData } from "./NoteEditor";
+import { notesApi } from "@/lib/api/notes";
 
 interface LocalNote {
   slug: string;
@@ -30,52 +30,107 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function LocalNoteDetail({ slug }: { slug: string }) {
-  const router = useRouter();
   const [note, setNote] = useState<LocalNote | null>(null);
   const [loading, setLoading] = useState(true);
   const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("notes-items");
-      if (stored) {
-        const notes: LocalNote[] = JSON.parse(stored);
-        const found = notes.find((n) => n.slug === slug);
-        setNote(found || null);
+    let cancelled = false;
+
+    async function loadNote() {
+      // 1. Try localStorage first
+      try {
+        const stored = localStorage.getItem("notes-items");
+        if (stored) {
+          const notes: LocalNote[] = JSON.parse(stored);
+          const found = notes.find((n) => n.slug === slug);
+          if (found) {
+            if (!cancelled) {
+              setNote(found);
+              setLoading(false);
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Error reading note from localStorage:", e);
       }
-    } catch (e) {
-      console.warn("Error reading note from localStorage:", e);
+
+      // 2. Fallback: fetch from API (COS)
+      try {
+        const apiNote = await notesApi.get(slug);
+        if (!cancelled && apiNote) {
+          const mappedNote: LocalNote = {
+            slug: apiNote.slug,
+            title: apiNote.title,
+            date: apiNote.date,
+            category: (apiNote.tags && apiNote.tags[0]) || "随笔",
+            tags: apiNote.tags || [],
+            summary: apiNote.description || "",
+            content: apiNote.content || "",
+            readingTime: `${Math.max(1, Math.ceil((apiNote.content || "").length / 500))} min read`,
+            source: "import",
+            isLocal: false,
+          };
+          setNote(mappedNote);
+        }
+      } catch (e) {
+        console.warn("Error fetching note from API:", e);
+      }
+
+      if (!cancelled) {
+        setLoading(false);
+      }
     }
-    setLoading(false);
+
+    loadNote();
+    return () => { cancelled = true; };
   }, [slug]);
 
-  const handleEditorSave = (updatedNote: NoteData) => {
+  const handleEditorSave = async (updatedNote: NoteData) => {
+    const updatedLocal: LocalNote = {
+      slug,
+      title: updatedNote.title,
+      date: updatedNote.date,
+      category: updatedNote.category,
+      tags: updatedNote.tags,
+      summary: updatedNote.summary,
+      content: updatedNote.content,
+      readingTime: updatedNote.readingTime,
+      source: note?.source || "local",
+      isLocal: note?.isLocal ?? true,
+    };
+
+    // Save to localStorage
     try {
       const stored = localStorage.getItem("notes-items");
-      if (stored) {
-        const notes: LocalNote[] = JSON.parse(stored);
-        const updatedNotes = notes.map((n) =>
-          n.slug === slug
-            ? {
-                ...n,
-                title: updatedNote.title,
-                date: updatedNote.date,
-                category: updatedNote.category,
-                tags: updatedNote.tags,
-                summary: updatedNote.summary,
-                content: updatedNote.content,
-                readingTime: updatedNote.readingTime,
-              }
-            : n
-        );
-        localStorage.setItem("notes-items", JSON.stringify(updatedNotes));
-        // Update local state
-        const refreshed = updatedNotes.find((n) => n.slug === slug);
-        setNote(refreshed || null);
+      const notes: LocalNote[] = stored ? JSON.parse(stored) : [];
+      const idx = notes.findIndex((n) => n.slug === slug);
+      if (idx >= 0) {
+        notes[idx] = { ...notes[idx], ...updatedLocal };
+      } else {
+        notes.push(updatedLocal);
       }
+      localStorage.setItem("notes-items", JSON.stringify(notes));
     } catch (e) {
-      console.warn("Error saving note:", e);
+      console.warn("Error saving note to localStorage:", e);
     }
+
+    // Also save to API (COS)
+    try {
+      await notesApi.save(slug, {
+        slug,
+        title: updatedNote.title,
+        content: updatedNote.content,
+        date: updatedNote.date,
+        tags: updatedNote.tags,
+        description: updatedNote.summary,
+      });
+    } catch (e) {
+      console.warn("Error saving note to API:", e);
+    }
+
+    setNote(updatedLocal);
   };
 
   if (loading) {
