@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "via.placeholder.com",
       },
+      {
+        protocol: "https",
+        hostname: "**.cos.ap-guangzhou.myqcloud.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cos.ap-shanghai.myqcloud.com",
+      },
     ],
   },
 };

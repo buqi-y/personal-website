@@ -62,23 +62,29 @@ export function NotesClient({ notes: serverNotes, categories }: NotesClientProps
       console.warn("Error reading notes from localStorage:", e);
     }
 
-    // 2. 后台从 API 拉取最新
+    // 2. 后台从 API 拉取最新，与本地数据合并而非覆盖
     notesApi.list().then((apiNotes) => {
       if (apiNotes && Array.isArray(apiNotes) && apiNotes.length > 0) {
-        const mapped: NoteItem[] = apiNotes.map((n) => ({
-          slug: n.slug,
-          title: n.title,
-          date: n.date,
-          tags: n.tags || [],
-          description: n.description,
-          category: "",
-          summary: n.description || "",
-          readingTime: "",
-          isLocal: true,
-          source: "local" as const,
-        }));
-        setLocalNotes(mapped);
-        window.localStorage.setItem("notes-items", JSON.stringify(mapped));
+        setLocalNotes((prevLocal) => {
+          const apiMapped: NoteItem[] = apiNotes.map((n) => ({
+            slug: n.slug,
+            title: n.title,
+            date: n.date,
+            tags: n.tags || [],
+            description: n.description,
+            category: "",
+            summary: n.description || "",
+            readingTime: "",
+            isLocal: true,
+            source: "local" as const,
+          }));
+          // 合并逻辑：API 中有的更新，本地有但 API 没有的保留
+          const apiSlugs = new Set(apiMapped.map((n) => n.slug));
+          const localOnly = prevLocal.filter((n) => !apiSlugs.has(n.slug));
+          const merged = [...apiMapped, ...localOnly];
+          window.localStorage.setItem("notes-items", JSON.stringify(merged));
+          return merged;
+        });
       }
     }).catch((err) => {
       console.warn("Failed to fetch notes from API, using cache:", err);
@@ -231,6 +237,18 @@ export function NotesClient({ notes: serverNotes, categories }: NotesClientProps
       source: "import",
     };
     saveLocalNotes([noteItem, ...localNotes]);
+
+    // 同步导入的笔记到 API，确保 API 也有该笔记
+    notesApi.save(noteItem.slug, {
+      slug: noteItem.slug,
+      title: noteItem.title,
+      content: noteItem.content || "",
+      date: noteItem.date,
+      tags: noteItem.tags,
+      description: noteItem.summary,
+    }).catch((err) => {
+      console.warn("Failed to sync imported note to API:", err);
+    });
   };
 
   const handleDeleteClick = (note: NoteItem) => {

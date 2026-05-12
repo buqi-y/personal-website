@@ -93,8 +93,25 @@ function isColorValue(val: unknown): boolean {
 
 function getImageSrc(img: string | LifeImage): string | null {
   if (isColorValue(img)) return null;
-  if (typeof img === "string") return img;
-  return img.data;
+  let src: string;
+  if (typeof img === "string") {
+    src = img;
+  } else {
+    src = img.data;
+  }
+  // 过滤空值
+  if (!src || src.trim() === "") return null;
+  // 对 COS 签名 URL 去除过期的签名参数，转换为公开 URL
+  if (src.includes(".cos.") && src.includes("q-sign-algorithm")) {
+    try {
+      const urlObj = new URL(src);
+      urlObj.search = "";
+      src = urlObj.toString();
+    } catch {
+      // URL 解析失败则保持原值
+    }
+  }
+  return src;
 }
 
 function compressImage(
@@ -517,6 +534,14 @@ export default function LifePage() {
                               src={realImages[0]}
                               alt="动态图片"
                               className="w-full max-h-48 object-cover rounded-lg hover:scale-[1.02] transition-transform duration-200"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = "none";
+                                const placeholder = document.createElement("div");
+                                placeholder.className = "w-full h-48 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs";
+                                placeholder.textContent = "图片加载失败";
+                                target.parentElement?.appendChild(placeholder);
+                              }}
                             />
                           </div>
                         ) : (
@@ -531,6 +556,14 @@ export default function LifePage() {
                                   src={src}
                                   alt={`动态图片 ${idx + 1}`}
                                   className="w-full h-full object-cover hover:scale-[1.05] transition-transform duration-200"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.style.display = "none";
+                                    const placeholder = document.createElement("div");
+                                    placeholder.className = "w-full h-full rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs";
+                                    placeholder.textContent = "图片加载失败";
+                                    target.parentElement?.appendChild(placeholder);
+                                  }}
                                 />
                               </div>
                             ))}
@@ -989,6 +1022,10 @@ export default function LifePage() {
               alt="预览大图"
               className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = "none";
+              }}
             />
 
             {/* Index indicator */}
