@@ -1,0 +1,48 @@
+name: Deploy to Tencent Cloud COS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: personal-website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: personal-website
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: personal-website
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+          NEXT_PUBLIC_API_KEY: ${{ secrets.API_KEY }}
+          NEXT_PUBLIC_MEDIA_CDN: ${{ secrets.MEDIA_CDN }}
+
+      - name: Deploy to COS
+        uses: TencentCloud/cos-action@v1
+        with:
+          secret_id: ${{ secrets.TENCENT_SECRET_ID }}
+          secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
+          cos_bucket: ${{ secrets.COS_BUCKET }}
+          cos_region: ${{ secrets.COS_REGION }}
+          local_path: personal-website/out/
+          remote_path: /
+          clean: true

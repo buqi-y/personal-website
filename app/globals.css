@@ -1,0 +1,226 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+@plugin "@tailwindcss/typography";
+
+/* === Custom Variants === */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* === Theme Configuration === */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+  --color-ring: hsl(var(--ring));
+  --font-sans: var(--font-inter), var(--font-noto), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  --animate-shine-sweep: shine 2s ease-in-out infinite;
+  --animate-card-hover: cardHover 0.3s ease forwards;
+}
+
+/* === CSS Variables - Dark Theme (Default) === */
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+  }
+
+  /* Light Theme */
+  :root.light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 9%;
+    --primary: 217 91% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 217 91% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 217 91% 50%;
+  }
+}
+
+/* === Base Styles === */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-inter), var(--font-noto), sans-serif;
+    min-height: 100vh;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* === Keyframe Animations === */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+@keyframes cardHover {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Glass Morphism === */
+.glass {
+  background: rgba(255, 255, 255, calc(0.05 * var(--card-opacity, 1)));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, calc(0.1 * var(--card-opacity, 1)));
+}
+
+.light .glass {
+  background: rgba(255, 255, 255, calc(0.7 * var(--card-opacity, 1)));
+  border: 1px solid rgba(0, 0, 0, calc(0.08 * var(--card-opacity, 1)));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* === Card Hover Effects === */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Shine sweep effect on hover */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%) rotate(45deg);
+  transition: none;
+}
+
+.card-shine:hover::after {
+  animation: shine 0.8s ease-in-out forwards;
+}
+
+/* === Bento Grid === */
+.bento-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (min-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.bento-item {
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  padding: 1.5rem;
+}
+
+/* === Custom Scrollbar (Dark Theme) === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+}
+
+/* === Typography Plugin Overrides === */
+.prose {
+  --tw-prose-body: hsl(var(--foreground));
+  --tw-prose-headings: hsl(var(--foreground));
+  --tw-prose-links: hsl(var(--primary));
+  --tw-prose-code: hsl(var(--foreground));
+}

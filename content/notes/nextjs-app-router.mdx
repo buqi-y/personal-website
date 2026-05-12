@@ -1,0 +1,82 @@
+---
+title: "Next.js App Router 完全指南"
+date: "2024-01-10"
+category: "技术"
+tags: ["Next.js", "React", "前端"]
+summary: "深入了解 Next.js 14 App Router 的核心概念和最佳实践。"
+---
+
+# Next.js App Router 完全指南
+
+App Router 是 Next.js 13 引入的全新路由系统，它基于 React Server Components 构建，带来了全新的开发体验。在 Next.js 14 中，App Router 已经趋于稳定，成为推荐的路由方案。
+
+## 核心概念
+
+### Server Components
+
+默认情况下，App Router 中的组件都是 Server Components。这意味着它们在服务器端渲染，不会增加客户端 JavaScript 包的大小。
+
+Server Components 的优势：
+- 直接访问后端资源（数据库、文件系统）
+- 减少客户端 JavaScript 体积
+- 自动代码分割
+- 流式渲染支持
+
+```tsx
+// 这是一个 Server Component（默认）
+export default async function Page() {
+  const data = await fetch('https://api.example.com/data')
+  return <div>{/* 渲染数据 */}</div>
+}
+```
+
+### Client Components
+
+当需要交互性时，使用 `"use client"` 指令标记客户端组件：
+
+```tsx
+"use client"
+
+import { useState } from 'react'
+
+export function Counter() {
+  const [count, setCount] = useState(0)
+  return <button onClick={() => setCount(count + 1)}>{count}</button>
+}
+```
+
+### 数据获取
+
+在 App Router 中，数据获取变得更加简单。你可以直接在 Server Components 中使用 async/await：
+
+```tsx
+async function getData() {
+  const res = await fetch('https://api.example.com/data', {
+    next: { revalidate: 3600 } // 每小时重新验证
+  })
+  return res.json()
+}
+```
+
+## 路由系统
+
+App Router 使用文件系统路由，每个文件夹代表一个路由段：
+
+- `app/page.tsx` → `/`
+- `app/about/page.tsx` → `/about`
+- `app/blog/[slug]/page.tsx` → `/blog/:slug`
+
+### 特殊文件
+
+- `layout.tsx` — 共享布局
+- `loading.tsx` — 加载状态
+- `error.tsx` — 错误处理
+- `not-found.tsx` — 404 页面
+
+## 最佳实践
+
+1. 合理使用 Server 和 Client Components
+2. 利用并行路由提升性能
+3. 使用 loading.tsx 优化加载体验
+4. 善用 Suspense 边界进行流式渲染
+5. 利用 generateStaticParams 预生成静态页面

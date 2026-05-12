@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "title": "个人网站 V2",
+    "description": "使用 Next.js 14 和 Tailwind CSS 构建的个人品牌网站，支持深色模式和自定义主题。",
+    "cover": "#6366f1",
+    "techStack": ["Next.js", "React", "Tailwind CSS", "Framer Motion"],
+    "category": "Web",
+    "link": "https://example.com",
+    "date": "2024-01"
+  },
+  {
+    "id": "2",
+    "title": "任务管理 App",
+    "description": "一款高效的任务管理应用，支持看板视图、日历视图和团队协作。",
+    "cover": "#8b5cf6",
+    "techStack": ["React Native", "TypeScript", "Firebase"],
+    "category": "App",
+    "link": "https://example.com",
+    "date": "2023-11"
+  },
+  {
+    "id": "3",
+    "title": "电商平台设计",
+    "description": "为某品牌设计的电商平台 UI，包含商品展示、购物车和支付流程。",
+    "cover": "#ec4899",
+    "techStack": ["Figma", "Protopie"],
+    "category": "设计",
+    "link": "https://example.com",
+    "date": "2023-09"
+  },
+  {
+    "id": "4",
+    "title": "实时聊天系统",
+    "description": "基于 WebSocket 的实时聊天系统，支持群聊、私聊和文件分享。",
+    "cover": "#14b8a6",
+    "techStack": ["Node.js", "Socket.io", "React", "MongoDB"],
+    "category": "Web",
+    "link": "https://example.com",
+    "date": "2023-07"
+  },
+  {
+    "id": "5",
+    "title": "健身追踪 App",
+    "description": "记录运动数据、生成训练报告的移动应用，支持 Apple Watch 联动。",
+    "cover": "#f59e0b",
+    "techStack": ["Swift", "SwiftUI", "HealthKit"],
+    "category": "App",
+    "link": "https://example.com",
+    "date": "2023-05"
+  },
+  {
+    "id": "6",
+    "title": "数据可视化仪表板",
+    "description": "企业级数据分析仪表板，支持多维度数据筛选和实时图表更新。",
+    "cover": "#06b6d4",
+    "techStack": ["Vue 3", "D3.js", "Tailwind CSS"],
+    "category": "Web",
+    "link": "https://example.com",
+    "date": "2023-03"
+  }
+]

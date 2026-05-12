@@ -1,0 +1,71 @@
+{
+  "E:\\work\\Qoder_code\\personal-website\\scf-api\\serverless.yml": {
+    "versionFramework": "4.35.1",
+    "servicePath": "E:\\work\\Qoder_code\\personal-website\\scf-api\\serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "component": "scf",
+      "name": "personal-site-api",
+      "app": "personal-site",
+      "inputs": {
+        "name": "personal-site-api",
+        "src": "./",
+        "runtime": "Nodejs18.15",
+        "region": "ap-shanghai",
+        "handler": "index.main_handler",
+        "memorySize": 128,
+        "timeout": 30,
+        "environment": {
+          "variables": {
+            "COS_SECRET_ID": "<REDACTED>",
+            "COS_SECRET_KEY": "<REDACTED>",
+            "COS_REGION": "ap-shanghai",
+            "COS_APPID": "${env:COS_APPID}",
+            "API_KEY": "<REDACTED>"
+          }
+        },
+        "events": [
+          {
+            "apigw": {
+              "parameters": {
+                "protocols": [
+                  "https"
+                ],
+                "endpoints": [
+                  {
+                    "path": "/api/{proxy+}",
+                    "method": "ANY",
+                    "enableCORS": true
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": true,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "serviceRawFile": "component: scf\r\nname: personal-site-api\r\napp: personal-site\r\n\r\ninputs:\r\n  name: personal-site-api\r\n  src: ./\r\n  runtime: Nodejs18.15\r\n  region: ap-shanghai\r\n  handler: index.main_handler\r\n  memorySize: 128\r\n  timeout: 30\r\n  environment:\r\n    variables:\r\n      COS_SECRET_ID: ${env:COS_SECRET_ID}\r\n      COS_SECRET_KEY: ${env:COS_SECRET_KEY}\r\n      COS_REGION: ap-shanghai\r\n      COS_APPID: ${env:COS_APPID}\r\n      API_KEY: ${env:API_KEY}\r\n  events:\r\n    - apigw:\r\n        parameters:\r\n          protocols:\r\n            - https\r\n          endpoints:\r\n            - path: /api/{proxy+}\r\n              method: ANY\r\n              enableCORS: true\r\n",
+    "command": [
+      "login"
+    ],
+    "options": {},
+    "orgId": "58a46884-5855-4976-bf0f-61c90005f30a",
+    "orgName": "qingyong",
+    "userId": "MljnQzj2dsc3RvwnGp",
+    "userName": "qingyong",
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
+  }
+}

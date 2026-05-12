@@ -1,0 +1,103 @@
+---
+title: "TypeScript 高级类型体操"
+date: "2023-12-20"
+category: "技术"
+tags: ["TypeScript", "类型系统"]
+summary: "掌握 TypeScript 条件类型、映射类型和模板字面量类型。"
+---
+
+# TypeScript 高级类型体操
+
+TypeScript 的类型系统是图灵完备的，这意味着你可以在类型层面实现几乎任何逻辑。掌握高级类型技巧，能让你写出更安全、更优雅的代码。
+
+## 条件类型
+
+条件类型的语法类似三元表达式：
+
+```typescript
+type IsString<T> = T extends string ? true : false
+
+type A = IsString<string>  // true
+type B = IsString<number>  // false
+```
+
+### infer 关键字
+
+`infer` 让你在条件类型中提取类型信息：
+
+```typescript
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : never
+
+type Fn = () => string
+type Result = ReturnType<Fn>  // string
+```
+
+## 映射类型
+
+映射类型可以基于已有类型创建新类型：
+
+```typescript
+type Readonly<T> = {
+  readonly [K in keyof T]: T[K]
+}
+
+type Partial<T> = {
+  [K in keyof T]?: T[K]
+}
+```
+
+### 键重映射
+
+使用 `as` 子句可以在映射过程中重命名键：
+
+```typescript
+type Getters<T> = {
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]
+}
+
+interface Person {
+  name: string
+  age: number
+}
+
+type PersonGetters = Getters<Person>
+// { getName: () => string; getAge: () => number }
+```
+
+## 模板字面量类型
+
+模板字面量类型让你在类型层面操作字符串：
+
+```typescript
+type EventName<T extends string> = `on${Capitalize<T>}`
+
+type ClickEvent = EventName<'click'>  // 'onClick'
+type FocusEvent = EventName<'focus'>  // 'onFocus'
+```
+
+## 实用类型工具
+
+### DeepPartial
+
+```typescript
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
+}
+```
+
+### PathKeys
+
+```typescript
+type PathKeys<T, Prefix extends string = ''> = {
+  [K in keyof T & string]: T[K] extends object
+    ? `${Prefix}${K}` | PathKeys<T[K], `${Prefix}${K}.`>
+    : `${Prefix}${K}`
+}[keyof T & string]
+```
+
+## 实践建议
+
+1. 不要为了类型体操而体操，以解决实际问题为目标
+2. 复杂类型加上注释说明意图
+3. 善用工具类型，避免重复造轮子
+4. 类型测试同样重要，推荐使用 `tsd` 或 `expect-type`

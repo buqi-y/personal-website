@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>张三 - 个人网站原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'Noto Sans SC', 'sans-serif'] },
+                    colors: { surface: { DEFAULT: 'rgba(255,255,255,0.03)', hover: 'rgba(255,255,255,0.06)' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background: var(--bg-color, #0a0a0a); color: #e5e5e5; min-height: 100vh; overflow-x: hidden; }
+        .bg-gradient-mesh { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; background: radial-gradient(ellipse 600px 400px at 20% 20%, rgba(99,102,241,0.08), transparent), radial-gradient(ellipse 500px 300px at 80% 60%, rgba(168,85,247,0.06), transparent), radial-gradient(ellipse 400px 400px at 50% 80%, rgba(14,165,233,0.04), transparent); }
+        .bg-wallpaper { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 0.5s ease; }
+        .bg-wallpaper.active { opacity: 0.3; }
+        .bento-card { background: rgba(255,255,255,calc(0.03 * var(--card-opacity,1))); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 1.5rem; position: relative; overflow: hidden; backdrop-filter: blur(10px); transition: all 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .bento-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); transition: left 0.6s ease; }
+        .bento-card:hover { transform: scale(1.02); border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,calc(0.05 * var(--card-opacity,1))); box-shadow: 0 20px 60px -15px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08); }
+        .bento-card:hover::before { left: 100%; }
+        .nav-glass { background: rgba(10,10,10,0.8); backdrop-filter: blur(20px) saturate(1.5); border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .nav-link { position: relative; padding: 0.5rem 1rem; border-radius: 8px; color: rgba(255,255,255,0.5); transition: all 0.3s ease; font-size: 0.875rem; font-weight: 500; }
+        .nav-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.05); }
+        .nav-link.active { color: #fff; background: rgba(255,255,255,0.08); }
+        .filter-tag { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s ease; position: relative; }
+        .filter-tag:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
+        .filter-tag.active { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
+        .filter-tag .tag-delete { display: none; position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; border-radius: 50%; background: rgba(239,68,68,0.8); color: white; font-size: 9px; line-height: 14px; text-align: center; cursor: pointer; }
+        .filter-tag:hover .tag-delete { display: block; }
+        .add-tag-btn { padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: rgba(99,102,241,0.1); border: 1px dashed rgba(99,102,241,0.3); color: rgba(129,140,248,0.8); cursor: pointer; transition: all 0.3s ease; }
+        .add-tag-btn:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.5); }
+        .page-section { display: none; animation: fadeIn 0.4s ease; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .avatar-ring { background: conic-gradient(from 0deg, #6366f1, #a855f7, #ec4899, #6366f1); padding: 3px; border-radius: 50%; }
+        .tech-badge { padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.7rem; font-weight: 500; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: rgba(165,180,252,0.9); }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; max-width: 500px; width: 90%; backdrop-filter: blur(20px); box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
+        .settings-drawer { position: fixed; top: 0; right: -420px; width: 400px; height: 100%; background: rgba(15,15,20,0.95); border-left: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); z-index: 100; padding: 2rem; transition: right 0.3s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; }
+        .settings-drawer.active { right: 0; }
+        .settings-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 99; display: none; }
+        .settings-overlay.active { display: block; }
+        .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; }
+        .progress-fill { height: 100%; width: 35%; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; transition: width 0.3s; }
+        .essay-item { opacity: 0; position: absolute; top: 0; left: 0; right: 0; transition: opacity 0.8s ease; }
+        .essay-item.active { opacity: 1; position: relative; }
+        .sidebar-profile { position: sticky; top: 5.5rem; height: fit-content; max-height: calc(100vh - 7rem); overflow-y: auto; }
+        .profile-field.field-hidden .flex-1 { text-decoration: line-through; }
+        .profile-field { transition: opacity 0.3s ease; }
+        .lyric-line { font-size: 0.75rem; color: rgba(255,255,255,0.3); transition: all 0.3s; line-height: 1.6; }
+        .lyric-line.active { color: rgba(255,255,255,0.9); font-weight: 500; }
+        .opacity-slider { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); outline: none; }
+        .opacity-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #6366f1; cursor: pointer; }
+        .wallpaper-thumb { width: 70px; height: 50px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background-size: cover; }
+        .wallpaper-thumb:hover, .wallpaper-thumb.active { border-color: rgba(99,102,241,0.8); }
+        .dropzone { border: 2px dashed rgba(168,85,247,0.3); border-radius: 16px; padding: 2rem; text-align: center; transition: all 0.3s ease; cursor: pointer; }
+        .dropzone:hover, .dropzone.dragover { border-color: rgba(168,85,247,0.6); background: rgba(168,85,247,0.05); }
+        /* ===== 歌词拖拽手柄 ===== */
+        .lyric-resize-handle { width: 40px; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; margin: 6px auto 0; cursor: ns-resize; transition: background 0.2s; }
+        .lyric-resize-handle:hover { background: rgba(255,255,255,0.35); }
+        /* ===== 编辑模式样式 ===== */
+        .edit-mode .bento-card { border: 2px dashed rgba(99,102,241,0.4) !important; }
+        .edit-mode .bento-card:hover { transform: none; }
+        .card-edit-controls { display: none; position: absolute; top: 8px; right: 8px; z-index: 10; gap: 4px; }
+        .edit-mode .card-edit-controls { display: flex; }
+        .card-edit-btn { width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .card-edit-btn:hover { background: rgba(99,102,241,0.5); border-color: rgba(99,102,241,0.8); }
+        .size-dropdown { display: none; position: absolute; top: 34px; right: 0; background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.5rem; min-width: 100px; z-index: 20; }
+        .size-dropdown.active { display: block; }
+        .size-option { padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.75rem; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.2s; }
+        .size-option:hover { background: rgba(99,102,241,0.2); color: white; }
+        /* ===== 添加卡片面板 ===== */
+        .add-card-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; z-index: 110; backdrop-filter: blur(20px); min-width: 360px; }
+        .add-card-panel.active { display: block; }
+        .card-type-option { padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.2s; }
+        .card-type-option:hover { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); }
+        /* ===== 颜色选择器增强 ===== */
+        .color-input-group { display: flex; gap: 8px; align-items: center; }
+        .color-input-group input[type="text"] { width: 80px; padding: 0.4rem 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.75rem; text-align: center; }
+        .color-input-group input[type="text"]:focus { outline: none; border-color: rgba(99,102,241,0.5); }
+        .gradient-preview { height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        @keyframes cardFadeOut { to { opacity: 0; transform: scale(0.9); } }
+        .card-removing { animation: cardFadeOut 0.3s ease forwards; }
+    </style>
+</head>
+<body>
+    <div class="bg-wallpaper" id="bgWallpaper"></div>
+    <div class="bg-gradient-mesh"></div>
+
+    <!-- ===== 导航栏 ===== -->
+    <nav class="nav-glass fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"><span class="text-white text-sm font-bold">Z</span></div>
+                <span class="font-semibold text-white/90 text-sm">张三</span>
+            </div>
+            <div class="hidden md:flex items-center gap-1">
+                <button class="nav-link active" data-page="home">首页</button>
+                <button class="nav-link" data-page="portfolio">作品集</button>
+                <button class="nav-link" data-page="notes">笔记</button>
+                <button class="nav-link" data-page="life">生活</button>
+                <button class="nav-link" data-page="bookmarks">收藏</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- 编辑布局按钮 -->
+                <button id="editLayoutBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20 transition-all" title="编辑布局">
+                    <i data-lucide="layout-grid" class="w-3.5 h-3.5 inline-block mr-1"></i>编辑
+                </button>
+                <button id="settingsBtn" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors" title="设置"><i data-lucide="settings" class="w-4 h-4 text-white/60"></i></button>
+                <button id="themeToggle" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"><i data-lucide="moon" class="w-4 h-4 text-white/60"></i></button>
+                <button id="mobileMenuBtn" class="md:hidden w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white/5"><i data-lucide="menu" class="w-5 h-5 text-white/60"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== 编辑模式工具栏 ===== -->
+    <div id="editToolbar" class="fixed top-16 left-0 right-0 z-40 hidden">
+        <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between" style="background: rgba(99,102,241,0.1); border-bottom: 1px solid rgba(99,102,241,0.3); backdrop-filter: blur(10px);">
+            <div class="flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
+                <span class="text-sm text-indigo-300">编辑模式 — 可调整卡片大小、拖拽排序或删除卡片</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="addCardBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500/20 border border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/30 transition-all">+ 添加卡片</button>
+                <button id="saveLayoutBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-500/20 border border-green-500/40 text-green-300 hover:bg-green-500/30 transition-all">保存布局</button>
+                <button id="cancelEditBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 border border-white/20 text-white/60 hover:bg-white/10 transition-all">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 主内容区域 ===== -->
+    <main class="max-w-7xl mx-auto px-6 pt-24 pb-16" id="mainContent">
+
+        <!-- ===== 首页 ===== -->
+        <section id="page-home" class="page-section active">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- 左侧侧栏：个人介绍 + 音乐播放器 -->
+                <div class="w-full lg:w-[32%] flex-shrink-0">
+                    <div class="sidebar-profile space-y-4">
+                        <!-- 个人介绍卡片 -->
+                        <div class="bento-card p-8 flex flex-col items-center text-center" data-card="profile">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <button id="editProfileBtn" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all" title="编辑个人信息"><i data-lucide="pencil" class="w-3.5 h-3.5 text-white/50"></i></button>
+                            <div class="avatar-ring mb-5"><div class="w-28 h-28 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center"><i data-lucide="user" class="w-12 h-12 text-white/40"></i></div></div>
+                            <h1 class="text-2xl font-bold text-white mb-1">张三</h1>
+                            <p class="text-indigo-400/80 font-medium text-sm mb-3">全栈开发者 / 设计师</p>
+                            <p class="text-white/50 text-sm leading-relaxed mb-4">热爱创造美好的数字体验。专注于构建优雅、高性能的 Web 应用，在代码与设计之间寻找完美平衡。</p>
+                            <div class="flex flex-wrap gap-2 justify-center mb-5">
+                                <span class="text-xs px-3 py-1 rounded-full bg-green-500/10 text-green-400/80 border border-green-500/20">✦ 可接受合作</span>
+                                <span class="text-xs px-3 py-1 rounded-full bg-white/5 text-white/40 border border-white/10">📍 上海</span>
+                            </div>
+                            <!-- 个人信息字段展示区域 -->
+                            <div class="w-full border-t border-white/5 pt-4 mb-4" id="profileFields">
+                                <div class="space-y-2.5 text-left" id="profileFieldsList">
+                                    <div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="age">
+                                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>
+                                        <span class="text-xs text-white/40 flex-shrink-0">年龄</span>
+                                        <span class="text-xs text-gray-300 flex-1">25岁</span>
+                                        <button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>
+                                    </div>
+                                    <div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="location">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>
+                                        <span class="text-xs text-white/40 flex-shrink-0">所在地</span>
+                                        <span class="text-xs text-gray-300 flex-1">上海</span>
+                                        <button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>
+                                    </div>
+                                    <div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="education">
+                                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>
+                                        <span class="text-xs text-white/40 flex-shrink-0">学习背景</span>
+                                        <span class="text-xs text-gray-300 flex-1">XX大学 · 计算机科学 · 本科</span>
+                                        <button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>
+                                    </div>
+                                    <div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="work">
+                                        <i data-lucide="briefcase" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>
+                                        <span class="text-xs text-white/40 flex-shrink-0">工作经历</span>
+                                        <span class="text-xs text-gray-300 flex-1">字节跳动 · 前端工程师 · 2023-至今</span>
+                                        <button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>
+                                    </div>
+                                    <div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="skills">
+                                        <i data-lucide="code" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>
+                                        <span class="text-xs text-white/40 flex-shrink-0">技能特长</span>
+                                        <span class="text-xs text-gray-300 flex-1">React, TypeScript, Node.js, UI设计</span>
+                                        <button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>
+                                    </div>
+                                    <div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="email">
+                                        <i data-lucide="mail" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>
+                                        <span class="text-xs text-white/40 flex-shrink-0">联系方式</span>
+                                        <span class="text-xs text-gray-300 flex-1">hello@example.com</span>
+                                        <button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 社交链接 -->
+                            <div class="w-full pt-4 border-t border-white/5">
+                                <p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-3">Connect</p>
+                                <div class="flex justify-center gap-3">
+                                    <a href="#" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all"><i data-lucide="github" class="w-4 h-4 text-white/70"></i></a>
+                                    <a href="#" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all"><i data-lucide="twitter" class="w-4 h-4 text-white/70"></i></a>
+                                    <a href="#" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all"><i data-lucide="mail" class="w-4 h-4 text-white/70"></i></a>
+                                    <a href="#" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all"><i data-lucide="rss" class="w-4 h-4 text-white/70"></i></a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 音乐播放器卡片（从右侧移至左侧） -->
+                        <div class="bento-card p-0 overflow-hidden" data-card="music">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <div class="h-28 bg-gradient-to-br from-purple-900/60 to-indigo-900/40 relative flex items-end p-4">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div class="relative z-10 flex items-center gap-3 w-full">
+                                    <div class="w-12 h-12 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center flex-shrink-0"><i data-lucide="disc-3" class="w-6 h-6 text-purple-300/70"></i></div>
+                                    <div class="min-w-0"><p class="text-sm text-white font-medium truncate">Merry Christmas Mr. Lawrence</p><p class="text-xs text-white/50 truncate">坂本龙一</p></div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <!-- 歌词区域（支持拖拽调整高度） -->
+                                <div class="mb-2" id="lyricArea" style="height: 56px; overflow: hidden; transition: height 0.2s;">
+                                    <p class="lyric-line">風が吹いている 遠い道の向こうから</p>
+                                    <p class="lyric-line active">あの日の夢が ここにまだ残っている</p>
+                                    <p class="lyric-line">時を超えて 響く melody</p>
+                                    <p class="lyric-line">遠い空の下 また会える日まで</p>
+                                </div>
+                                <!-- 歌词区域拖拽手柄 -->
+                                <div class="lyric-resize-handle" id="lyricResizeHandle" title="拖拽调整歌词区域高度"></div>
+                                <div class="progress-bar my-3"><div class="progress-fill"></div></div>
+                                <div class="flex items-center justify-between text-xs text-white/30 mb-3"><span>1:42</span><span>4:56</span></div>
+                                <div class="flex items-center justify-center gap-5">
+                                    <button class="text-white/40 hover:text-white/80 transition-colors"><i data-lucide="skip-back" class="w-4 h-4"></i></button>
+                                    <button class="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all"><i data-lucide="play" class="w-4 h-4 text-white/90 ml-0.5"></i></button>
+                                    <button class="text-white/40 hover:text-white/80 transition-colors"><i data-lucide="skip-forward" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="mt-3 text-center"><span class="text-[10px] px-2 py-0.5 rounded bg-green-500/10 text-green-400/60 border border-green-500/20">♪ QQ音乐</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧 Bento Grid -->
+                <div class="w-full lg:w-[68%]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-min" id="rightGrid">
+
+                        <!-- 第一行：日期时间卡片 + 随笔卡片 -->
+                        <!-- 日期时间卡片 -->
+                        <div class="bento-card p-6" data-card="datetime">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-xs text-white/30 uppercase tracking-wider font-medium">日期时间</p>
+                                <!-- 天气图标占位 -->
+                                <div class="flex items-center gap-1.5">
+                                    <i data-lucide="cloud-sun" class="w-4 h-4 text-amber-400/60"></i>
+                                    <span class="text-xs text-white/40">26°C</span>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-3xl font-bold text-white tracking-tight" id="timeDisplay">--:--:--</p>
+                                <p class="text-sm text-white/50 mt-1" id="dateDisplay">----/--/--</p>
+                                <p class="text-xs text-white/30 mt-1" id="weekdayDisplay">星期-</p>
+                            </div>
+                        </div>
+
+                        <!-- 随笔卡片 -->
+                        <div class="bento-card p-6" data-card="essay">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <div class="flex items-center gap-2 mb-4">
+                                <i data-lucide="quote" class="w-4 h-4 text-indigo-400/50"></i>
+                                <p class="text-xs text-white/30 uppercase tracking-wider font-medium">随想</p>
+                            </div>
+                            <div class="relative min-h-[80px]" id="essayCarousel">
+                                <div class="essay-item active"><p class="text-sm text-white/70 leading-relaxed italic">"代码是写给人看的，顺便让机器执行。每一行代码都是与未来的自己对话。"</p><p class="text-xs text-white/30 mt-3">2026-05-10 · 来自笔记</p></div>
+                                <div class="essay-item"><p class="text-sm text-white/70 leading-relaxed italic">"设计不是装饰，是让复杂变得简单的思维方式。好的设计让人感受不到设计的存在。"</p><p class="text-xs text-white/30 mt-3">2026-05-05 · 来自笔记</p></div>
+                                <div class="essay-item"><p class="text-sm text-white/70 leading-relaxed italic">"保持好奇心，像孩子一样探索世界。技术在变，但创造的热情不应该消退。"</p><p class="text-xs text-white/30 mt-3">2026-04-28 · 来自笔记</p></div>
+                                <div class="essay-item"><p class="text-sm text-white/70 leading-relaxed italic">"独处时写代码，协作时做设计。找到属于自己的节奏，比跟随潮流更重要。"</p><p class="text-xs text-white/30 mt-3">2026-04-20 · 来自笔记</p></div>
+                            </div>
+                            <div class="absolute top-0 right-6 w-6 h-10 bg-gradient-to-b from-indigo-500/30 to-purple-500/20 rounded-b-sm"></div>
+                        </div>
+
+                        <!-- 最新作品卡片 (占2列) -->
+                        <div class="bento-card md:col-span-2 p-6" data-card="works">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-xs text-white/30 uppercase tracking-wider font-medium">最新作品</p>
+                                <button class="text-xs text-indigo-400/70 hover:text-indigo-400 transition-colors" onclick="switchPage('portfolio')">查看全部 →</button>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="aspect-[4/3] rounded-xl bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border border-white/5 flex items-center justify-center"><i data-lucide="layout" class="w-6 h-6 text-indigo-400/50"></i></div>
+                                <div class="aspect-[4/3] rounded-xl bg-gradient-to-br from-emerald-900/40 to-teal-900/30 border border-white/5 flex items-center justify-center"><i data-lucide="smartphone" class="w-6 h-6 text-emerald-400/50"></i></div>
+                                <div class="aspect-[4/3] rounded-xl bg-gradient-to-br from-orange-900/40 to-red-900/30 border border-white/5 flex items-center justify-center"><i data-lucide="palette" class="w-6 h-6 text-orange-400/50"></i></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 mt-2">
+                                <p class="text-xs text-white/40 text-center">SaaS 后台</p>
+                                <p class="text-xs text-white/40 text-center">健康 App</p>
+                                <p class="text-xs text-white/40 text-center">品牌设计</p>
+                            </div>
+                        </div>
+
+                        <!-- 最新笔记卡片 -->
+                        <div class="bento-card p-6" data-card="notes">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-xs text-white/30 uppercase tracking-wider font-medium">最新笔记</p>
+                                <button class="text-xs text-indigo-400/70 hover:text-indigo-400 transition-colors" onclick="switchPage('notes')">更多 →</button>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="group cursor-pointer"><p class="text-sm text-white/70 group-hover:text-white/90 transition-colors truncate">构建高性能 React 应用的心得</p><p class="text-xs text-white/30 mt-0.5">2026-05-08</p></div>
+                                <div class="group cursor-pointer"><p class="text-sm text-white/70 group-hover:text-white/90 transition-colors truncate">设计系统：从 0 到 1</p><p class="text-xs text-white/30 mt-0.5">2026-04-22</p></div>
+                                <div class="group cursor-pointer"><p class="text-sm text-white/70 group-hover:text-white/90 transition-colors truncate">我为什么选择 Next.js 14</p><p class="text-xs text-white/30 mt-0.5">2026-04-15</p></div>
+                            </div>
+                        </div>
+
+                        <!-- 生活动态卡片 -->
+                        <div class="bento-card p-0 overflow-hidden" data-card="life">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <div class="h-32 bg-gradient-to-br from-sky-900/30 to-indigo-900/20 flex items-center justify-center"><i data-lucide="image" class="w-8 h-8 text-white/20"></i></div>
+                            <div class="p-4"><p class="text-sm text-white/60">周末在苏州河边骑行，秋天的上海真美 🍂</p><p class="text-xs text-white/30 mt-2">3 天前 · 上海</p></div>
+                        </div>
+
+                        <!-- 收藏精选卡片 -->
+                        <div class="bento-card p-6" data-card="bookmarks">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-4">收藏精选</p>
+                            <div class="space-y-2.5">
+                                <div class="flex items-center gap-3 group cursor-pointer"><div class="w-7 h-7 rounded-lg bg-black border border-white/10 flex items-center justify-center flex-shrink-0"><span class="text-xs">L</span></div><span class="text-sm text-white/50 group-hover:text-white/80 transition-colors">Linear</span></div>
+                                <div class="flex items-center gap-3 group cursor-pointer"><div class="w-7 h-7 rounded-lg bg-black border border-white/10 flex items-center justify-center flex-shrink-0"><span class="text-xs">R</span></div><span class="text-sm text-white/50 group-hover:text-white/80 transition-colors">Raycast</span></div>
+                                <div class="flex items-center gap-3 group cursor-pointer"><div class="w-7 h-7 rounded-lg bg-black border border-white/10 flex items-center justify-center flex-shrink-0"><span class="text-xs">V</span></div><span class="text-sm text-white/50 group-hover:text-white/80 transition-colors">Vercel</span></div>
+                            </div>
+                        </div>
+
+                        <!-- 技术栈卡片 -->
+                        <div class="bento-card p-6" data-card="techstack">
+                            <div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="拖拽移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除卡片"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>
+                            <p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-4">Tech Stack</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tech-badge">React</span><span class="tech-badge">Next.js</span><span class="tech-badge">TypeScript</span><span class="tech-badge">Node.js</span><span class="tech-badge">Tailwind</span><span class="tech-badge">Figma</span><span class="tech-badge">Python</span><span class="tech-badge">PostgreSQL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 作品集页 ===== -->
+        <section id="page-portfolio" class="page-section">
+            <div class="mb-8"><h2 class="text-3xl font-bold text-white mb-2">作品集</h2><p class="text-white/40 text-sm">精选项目与设计作品</p></div>
+            <div class="flex flex-wrap gap-2 mb-8 items-center" id="portfolioTags">
+                <button class="filter-tag active" data-filter="all">全部</button>
+                <button class="filter-tag" data-filter="web">Web<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="app">App<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="design">设计<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="add-tag-btn" onclick="openAddTagModal('portfolioTags')">+ 新建标签</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="bento-card p-0 overflow-hidden" data-category="web"><div class="h-44 bg-gradient-to-br from-indigo-900/50 to-violet-900/30 flex items-center justify-center"><i data-lucide="monitor" class="w-10 h-10 text-indigo-400/40"></i></div><div class="p-5"><h3 class="text-white font-semibold mb-1">Nexus Dashboard</h3><p class="text-white/40 text-sm mb-3">企业级 SaaS 数据分析后台</p><div class="flex flex-wrap gap-1.5 mb-3"><span class="tech-badge">React</span><span class="tech-badge">TypeScript</span></div><a href="#" class="text-xs text-indigo-400/70 hover:text-indigo-400">查看详情 →</a></div></div>
+                <div class="bento-card p-0 overflow-hidden" data-category="app"><div class="h-44 bg-gradient-to-br from-emerald-900/50 to-teal-900/30 flex items-center justify-center"><i data-lucide="heart-pulse" class="w-10 h-10 text-emerald-400/40"></i></div><div class="p-5"><h3 class="text-white font-semibold mb-1">VitaTrack</h3><p class="text-white/40 text-sm mb-3">智能健康管理 App</p><div class="flex flex-wrap gap-1.5 mb-3"><span class="tech-badge">React Native</span><span class="tech-badge">Node.js</span></div><a href="#" class="text-xs text-indigo-400/70 hover:text-indigo-400">查看详情 →</a></div></div>
+                <div class="bento-card p-0 overflow-hidden" data-category="design"><div class="h-44 bg-gradient-to-br from-orange-900/50 to-amber-900/30 flex items-center justify-center"><i data-lucide="pen-tool" class="w-10 h-10 text-orange-400/40"></i></div><div class="p-5"><h3 class="text-white font-semibold mb-1">Forma Design System</h3><p class="text-white/40 text-sm mb-3">完整的设计系统</p><div class="flex flex-wrap gap-1.5 mb-3"><span class="tech-badge">Figma</span><span class="tech-badge">Storybook</span></div><a href="#" class="text-xs text-indigo-400/70 hover:text-indigo-400">查看详情 →</a></div></div>
+            </div>
+        </section>
+
+        <!-- ===== 笔记页 ===== -->
+        <section id="page-notes" class="page-section">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+                <div><h2 class="text-3xl font-bold text-white mb-2">笔记</h2><p class="text-white/40 text-sm">技术思考与学习记录</p></div>
+                <button id="obsidianImportBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm font-medium hover:bg-purple-500/20 transition-all"><i data-lucide="upload-cloud" class="w-4 h-4"></i>导入 Obsidian 笔记</button>
+            </div>
+            <div id="obsidianDropzone" class="hidden mb-8"><div class="dropzone" id="dropzoneArea"><div class="flex flex-col items-center gap-3"><div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center"><i data-lucide="upload-cloud" class="w-7 h-7 text-purple-400/70"></i></div><p class="text-white/70 font-medium text-sm">拖拽文件到此处，或点击选择文件</p><p class="text-white/40 text-xs mt-1">支持 .md 文件，兼容 Obsidian 格式</p></div></div></div>
+            <div class="flex flex-wrap gap-2 mb-8 items-center" id="notesTags">
+                <button class="filter-tag active" data-filter="all">全部</button>
+                <button class="filter-tag" data-filter="tech">技术<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="design">设计<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="thought">思考<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="add-tag-btn" onclick="openAddTagModal('notesTags')">+ 新建标签</button>
+            </div>
+            <div class="space-y-4">
+                <article class="bento-card p-6 cursor-pointer" data-category="tech"><div class="flex items-center gap-3 mb-2"><span class="text-xs text-white/30">2026-05-08</span><span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400/80 border border-indigo-500/20">技术</span></div><h3 class="text-lg font-semibold text-white/90 mb-1">构建高性能 React 应用的实践心得</h3><p class="text-sm text-white/40 line-clamp-2">从虚拟列表到代码分割，分享在大型项目中优化 React 性能的具体策略...</p></article>
+                <article class="bento-card p-6 cursor-pointer" data-category="design"><div class="flex items-center gap-3 mb-2"><span class="text-xs text-white/30">2026-04-22</span><span class="text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-400/80 border border-purple-500/20">设计</span></div><h3 class="text-lg font-semibold text-white/90 mb-1">设计系统实战：从 0 到 1 构建组件库</h3><p class="text-sm text-white/40 line-clamp-2">记录为团队搭建设计系统的完整过程...</p></article>
+                <article class="bento-card p-6 cursor-pointer" data-category="thought"><div class="flex items-center gap-3 mb-2"><span class="text-xs text-white/30">2026-03-30</span><span class="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20">思考</span></div><h3 class="text-lg font-semibold text-white/90 mb-1">独立开发者的时间管理哲学</h3><p class="text-sm text-white/40 line-clamp-2">在全职工作之余做 side project，如何平衡精力...</p></article>
+            </div>
+        </section>
+
+        <!-- ===== 生活页 ===== -->
+        <section id="page-life" class="page-section">
+            <div class="mb-8"><h2 class="text-3xl font-bold text-white mb-2">生活</h2><p class="text-white/40 text-sm">记录生活中的美好瞬间</p></div>
+            <div class="flex flex-wrap gap-2 mb-8 items-center" id="lifeTags">
+                <button class="filter-tag active" data-filter="all">全部</button>
+                <button class="filter-tag" data-filter="travel">旅行<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="food">美食<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="daily">日常<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="add-tag-btn" onclick="openAddTagModal('lifeTags')">+ 新建标签</button>
+            </div>
+            <div class="relative space-y-8 pl-10">
+                <div class="absolute left-5 top-6 bottom-0 w-px bg-gradient-to-b from-indigo-500/40 via-purple-500/20 to-transparent"></div>
+                <div class="relative life-item" data-category="travel"><div class="absolute left-[-1.6rem] top-6 w-3 h-3 rounded-full bg-indigo-500 border-2 border-[#0a0a0a]"></div><div class="bento-card p-0 overflow-hidden"><div class="h-44 bg-gradient-to-br from-sky-900/40 to-blue-800/20 flex items-center justify-center"><i data-lucide="mountain" class="w-12 h-12 text-sky-400/30"></i></div><div class="p-5"><p class="text-white/70 mb-2">周末去了莫干山，山顶的云海太震撼了。</p><div class="flex items-center gap-3 text-xs text-white/30"><span>2026-05-10</span><span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">📍 莫干山</span></div></div></div></div>
+                <div class="relative life-item" data-category="food"><div class="absolute left-[-1.6rem] top-6 w-3 h-3 rounded-full bg-purple-500 border-2 border-[#0a0a0a]"></div><div class="bento-card p-0 overflow-hidden"><div class="h-44 bg-gradient-to-br from-amber-900/40 to-orange-800/20 flex items-center justify-center"><i data-lucide="coffee" class="w-12 h-12 text-amber-400/30"></i></div><div class="p-5"><p class="text-white/70 mb-2">发现了一家超棒的独立咖啡馆，手冲耶加雪菲的花香太迷人了。</p><div class="flex items-center gap-3 text-xs text-white/30"><span>2026-05-03</span><span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">📍 武康路</span></div></div></div></div>
+                <div class="relative life-item" data-category="daily"><div class="absolute left-[-1.6rem] top-6 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#0a0a0a]"></div><div class="bento-card p-0 overflow-hidden"><div class="h-44 bg-gradient-to-br from-emerald-900/40 to-green-800/20 flex items-center justify-center"><i data-lucide="bike" class="w-12 h-12 text-emerald-400/30"></i></div><div class="p-5"><p class="text-white/70 mb-2">苏州河骑行 30km 达成！秋天的梧桐落叶铺满了整条路。</p><div class="flex items-center gap-3 text-xs text-white/30"><span>2026-04-20</span><span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">📍 苏州河</span></div></div></div></div>
+            </div>
+        </section>
+
+        <!-- ===== 收藏页 ===== -->
+        <section id="page-bookmarks" class="page-section">
+            <div class="mb-8"><h2 class="text-3xl font-bold text-white mb-2">收藏</h2><p class="text-white/40 text-sm">日常使用的工具与灵感来源</p></div>
+            <div class="flex flex-wrap gap-2 mb-8 items-center" id="bookmarksTags">
+                <button class="filter-tag active" data-filter="all">全部</button>
+                <button class="filter-tag" data-filter="tools">工具<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="filter-tag" data-filter="inspiration">灵感<span class="tag-delete" onclick="deleteTag(event, this)">×</span></button>
+                <button class="add-tag-btn" onclick="openAddTagModal('bookmarksTags')">+ 新建标签</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" data-category="tools">
+                <a href="#" class="bento-card p-4 flex items-center gap-3 hover:scale-[1.02]"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-600/30 to-purple-600/20 border border-violet-500/20 flex items-center justify-center"><span class="text-sm font-bold text-violet-400">L</span></div><div><p class="text-sm text-white/80 font-medium">Linear</p><p class="text-xs text-white/30">项目管理</p></div></a>
+                <a href="#" class="bento-card p-4 flex items-center gap-3 hover:scale-[1.02]"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-600/30 to-red-600/20 border border-orange-500/20 flex items-center justify-center"><span class="text-sm font-bold text-orange-400">R</span></div><div><p class="text-sm text-white/80 font-medium">Raycast</p><p class="text-xs text-white/30">效率工具</p></div></a>
+                <a href="#" class="bento-card p-4 flex items-center gap-3 hover:scale-[1.02]"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-600/30 to-blue-600/20 border border-sky-500/20 flex items-center justify-center"><span class="text-sm font-bold text-sky-400">V</span></div><div><p class="text-sm text-white/80 font-medium">VS Code</p><p class="text-xs text-white/30">编辑器</p></div></a>
+                <a href="#" class="bento-card p-4 flex items-center gap-3 hover:scale-[1.02]"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-pink-600/30 to-rose-600/20 border border-pink-500/20 flex items-center justify-center"><span class="text-sm font-bold text-pink-400">F</span></div><div><p class="text-sm text-white/80 font-medium">Figma</p><p class="text-xs text-white/30">设计工具</p></div></a>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== 编辑个人信息模态框 ===== -->
+    <div class="modal-overlay" id="editProfileModal">
+        <div class="modal-content" style="max-width: 560px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="flex items-center justify-between mb-5 flex-shrink-0">
+                <h3 class="text-lg font-semibold text-white">编辑个人信息</h3>
+                <button onclick="closeModal('editProfileModal')" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10"><i data-lucide="x" class="w-4 h-4 text-white/60"></i></button>
+            </div>
+            <div class="space-y-4 overflow-y-auto flex-1 pr-1" style="scrollbar-width: thin;">
+                <!-- 基础信息 -->
+                <div class="pb-3 border-b border-white/5">
+                    <p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-3">基础信息</p>
+                    <div class="space-y-3">
+                        <div><label class="text-xs text-white/40 mb-1 block">姓名</label><input type="text" value="张三" class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50"></div>
+                        <div><label class="text-xs text-white/40 mb-1 block">职业</label><input type="text" value="全栈开发者 / 设计师" class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50"></div>
+                        <div><label class="text-xs text-white/40 mb-1 block">简介</label><textarea rows="2" class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 resize-none">热爱创造美好的数字体验。专注于构建优雅、高性能的 Web 应用，在代码与设计之间寻找完美平衡。</textarea></div>
+                    </div>
+                </div>
+                <!-- 自定义信息字段 -->
+                <div class="pb-3 border-b border-white/5">
+                    <p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-3">个人信息字段</p>
+                    <div class="space-y-3" id="modalFieldsList">
+                        <div class="modal-field-item flex items-center gap-3" data-field="age">
+                            <div class="flex-1"><label class="text-xs text-white/40 mb-1 flex items-center gap-1.5"><i data-lucide="calendar" class="w-3 h-3"></i>年龄</label><input type="text" value="25岁" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50"></div>
+                            <label class="relative inline-flex items-center cursor-pointer mt-4">
+                                <input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility('age', this.checked)">
+                                <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>
+                            </label>
+                        </div>
+                        <div class="modal-field-item flex items-center gap-3" data-field="location">
+                            <div class="flex-1"><label class="text-xs text-white/40 mb-1 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3 h-3"></i>所在地</label><input type="text" value="上海" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50"></div>
+                            <label class="relative inline-flex items-center cursor-pointer mt-4">
+                                <input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility('location', this.checked)">
+                                <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>
+                            </label>
+                        </div>
+                        <div class="modal-field-item flex items-center gap-3" data-field="education">
+                            <div class="flex-1"><label class="text-xs text-white/40 mb-1 flex items-center gap-1.5"><i data-lucide="graduation-cap" class="w-3 h-3"></i>学习背景</label><input type="text" value="XX大学 · 计算机科学 · 本科" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50"></div>
+                            <label class="relative inline-flex items-center cursor-pointer mt-4">
+                                <input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility('education', this.checked)">
+                                <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>
+                            </label>
+                        </div>
+                        <div class="modal-field-item flex items-center gap-3" data-field="work">
+                            <div class="flex-1"><label class="text-xs text-white/40 mb-1 flex items-center gap-1.5"><i data-lucide="briefcase" class="w-3 h-3"></i>工作经历</label><input type="text" value="字节跳动 · 前端工程师 · 2023-至今" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50"></div>
+                            <label class="relative inline-flex items-center cursor-pointer mt-4">
+                                <input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility('work', this.checked)">
+                                <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>
+                            </label>
+                        </div>
+                        <div class="modal-field-item flex items-center gap-3" data-field="skills">
+                            <div class="flex-1"><label class="text-xs text-white/40 mb-1 flex items-center gap-1.5"><i data-lucide="code" class="w-3 h-3"></i>技能特长</label><input type="text" value="React, TypeScript, Node.js, UI设计" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50"></div>
+                            <label class="relative inline-flex items-center cursor-pointer mt-4">
+                                <input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility('skills', this.checked)">
+                                <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>
+                            </label>
+                        </div>
+                        <div class="modal-field-item flex items-center gap-3" data-field="email">
+                            <div class="flex-1"><label class="text-xs text-white/40 mb-1 flex items-center gap-1.5"><i data-lucide="mail" class="w-3 h-3"></i>联系方式</label><input type="text" value="hello@example.com" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50"></div>
+                            <label class="relative inline-flex items-center cursor-pointer mt-4">
+                                <input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility('email', this.checked)">
+                                <div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 添加自定义字段按钮 -->
+                    <button onclick="addCustomField()" class="w-full mt-3 py-2 rounded-xl bg-indigo-500/10 border border-dashed border-indigo-500/30 text-indigo-300 text-xs font-medium hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加自定义字段
+                    </button>
+                </div>
+                <!-- 保存按钮 -->
+                <button onclick="saveProfileChanges()" class="w-full py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium hover:bg-indigo-500/30 transition-all">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 新建标签模态框 ===== -->
+    <div class="modal-overlay" id="addTagModal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="flex items-center justify-between mb-6"><h3 class="text-lg font-semibold text-white">新建标签</h3><button onclick="closeModal('addTagModal')" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10"><i data-lucide="x" class="w-4 h-4 text-white/60"></i></button></div>
+            <div class="space-y-4">
+                <div><label class="text-xs text-white/40 mb-1 block">标签名称</label><input type="text" id="newTagInput" placeholder="输入标签名称..." class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50"></div>
+                <button onclick="confirmAddTag()" class="w-full py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium hover:bg-indigo-500/30 transition-all">创建标签</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 添加卡片类型选择面板 ===== -->
+    <div class="add-card-panel" id="addCardPanel">
+        <div class="flex items-center justify-between mb-5"><h3 class="text-lg font-semibold text-white">添加卡片</h3><button onclick="document.getElementById('addCardPanel').classList.remove('active')" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10"><i data-lucide="x" class="w-4 h-4 text-white/60"></i></button></div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="card-type-option" onclick="addNewCard('text')"><div class="flex items-center gap-2 mb-2"><i data-lucide="type" class="w-5 h-5 text-indigo-400/70"></i><span class="text-sm text-white/80 font-medium">自定义文本</span></div><p class="text-xs text-white/40">添加文字内容卡片</p></div>
+            <div class="card-type-option" onclick="addNewCard('image')"><div class="flex items-center gap-2 mb-2"><i data-lucide="image" class="w-5 h-5 text-purple-400/70"></i><span class="text-sm text-white/80 font-medium">图片</span></div><p class="text-xs text-white/40">展示图片内容</p></div>
+            <div class="card-type-option" onclick="addNewCard('link')"><div class="flex items-center gap-2 mb-2"><i data-lucide="link" class="w-5 h-5 text-sky-400/70"></i><span class="text-sm text-white/80 font-medium">链接</span></div><p class="text-xs text-white/40">添加外部链接</p></div>
+            <div class="card-type-option" onclick="addNewCard('stats')"><div class="flex items-center gap-2 mb-2"><i data-lucide="bar-chart-3" class="w-5 h-5 text-emerald-400/70"></i><span class="text-sm text-white/80 font-medium">统计</span></div><p class="text-xs text-white/40">展示数据统计</p></div>
+        </div>
+    </div>
+
+    <!-- ===== 设置面板抽屉（颜色区间调整增强） ===== -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+    <div class="settings-drawer" id="settingsDrawer">
+        <div class="flex items-center justify-between mb-8"><h3 class="text-lg font-semibold text-white">设置</h3><button onclick="closeSettings()" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10"><i data-lucide="x" class="w-4 h-4 text-white/60"></i></button></div>
+
+        <!-- 背景颜色选择器（完整色板） -->
+        <div class="mb-8">
+            <h4 class="text-sm font-medium text-white/70 mb-3">背景颜色</h4>
+            <!-- 主色选择器 -->
+            <div class="flex items-center gap-3 mb-3">
+                <input type="color" id="bgColorPicker" value="#0a0a0a" class="w-10 h-10 rounded-lg border border-white/10 cursor-pointer bg-transparent" style="padding:2px;">
+                <div class="flex-1">
+                    <p class="text-xs text-white/40 mb-1">单色背景</p>
+                    <div class="color-input-group">
+                        <input type="text" id="bgColorHex" value="#0a0a0a" placeholder="#HEX" onchange="applyHexColor(this.value)">
+                        <input type="text" id="bgColorHSL" value="0,0%,4%" placeholder="H,S%,L%" onchange="applyHSLColor(this.value)">
+                    </div>
+                </div>
+            </div>
+            <!-- 渐变色选择 -->
+            <div class="mb-3">
+                <p class="text-xs text-white/40 mb-2">渐变背景</p>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="flex items-center gap-2 flex-1">
+                        <input type="color" id="gradColor1" value="#0a0a0a" class="w-8 h-8 rounded border border-white/10 cursor-pointer bg-transparent" style="padding:2px;">
+                        <span class="text-xs text-white/30">→</span>
+                        <input type="color" id="gradColor2" value="#1a1a2e" class="w-8 h-8 rounded border border-white/10 cursor-pointer bg-transparent" style="padding:2px;">
+                    </div>
+                    <button id="applyGradientBtn" class="px-3 py-1.5 rounded-lg text-xs bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30 transition-all">应用渐变</button>
+                </div>
+                <div class="gradient-preview" id="gradientPreview" style="background: linear-gradient(135deg, #0a0a0a, #1a1a2e);"></div>
+            </div>
+            <!-- 透明度 -->
+            <div class="mt-4">
+                <div class="flex items-center justify-between mb-2"><p class="text-xs text-white/40">背景透明度</p><span class="text-xs text-white/40" id="bgOpacityVal">100%</span></div>
+                <input type="range" min="30" max="100" value="100" class="opacity-slider" id="bgOpacitySlider">
+            </div>
+        </div>
+
+        <!-- 壁纸设置 -->
+        <div class="mb-8">
+            <h4 class="text-sm font-medium text-white/70 mb-3">壁纸</h4>
+            <div class="flex flex-wrap gap-3 mb-3" id="wallpaperThumbs">
+                <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-wallpaper="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"></div>
+                <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" data-wallpaper="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"></div>
+                <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" data-wallpaper="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"></div>
+                <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" data-wallpaper="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"></div>
+                <div class="wallpaper-thumb active" style="background: #1a1a1a;" data-wallpaper="none"></div>
+            </div>
+        </div>
+
+        <!-- 卡片透明度 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-3"><h4 class="text-sm font-medium text-white/70">卡片透明度</h4><span class="text-xs text-white/40" id="opacityValue">100%</span></div>
+            <input type="range" min="20" max="100" value="100" class="opacity-slider" id="opacitySlider">
+        </div>
+
+        <div class="p-4 rounded-xl bg-white/3 border border-white/5"><p class="text-xs text-white/40 flex items-center gap-2"><i data-lucide="info" class="w-3.5 h-3.5"></i> 设置立即生效预览，刷新页面恢复默认</p></div>
+    </div>
+
+    <!-- ===== JavaScript ===== -->
+    <script>
+        lucide.createIcons();
+
+        // ===== 页面切换 =====
+        function switchPage(pageName) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById('page-' + pageName);
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.toggle('active', link.dataset.page === pageName));
+        }
+        document.querySelectorAll('.nav-link').forEach(link => link.addEventListener('click', () => switchPage(link.dataset.page)));
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => document.getElementById('mobileMenu')?.classList.toggle('hidden'));
+
+        // ===== 日期时间实时更新 =====
+        const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+        function updateDateTime() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2,'0');
+            const m = String(now.getMinutes()).padStart(2,'0');
+            const s = String(now.getSeconds()).padStart(2,'0');
+            document.getElementById('timeDisplay').textContent = h + ':' + m + ':' + s;
+            const y = now.getFullYear(), mo = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+            document.getElementById('dateDisplay').textContent = y + '/' + mo + '/' + d;
+            document.getElementById('weekdayDisplay').textContent = weekdays[now.getDay()];
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // ===== 随笔轮播 =====
+        let essayIndex = 0;
+        const essayItems = document.querySelectorAll('#essayCarousel .essay-item');
+        function rotateEssay() { essayItems[essayIndex].classList.remove('active'); essayIndex = (essayIndex + 1) % essayItems.length; essayItems[essayIndex].classList.add('active'); }
+        setInterval(rotateEssay, 5000);
+
+        // ===== 筛选标签 =====
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.addEventListener('click', function(e) {
+                if (e.target.classList.contains('tag-delete')) return;
+                this.parentElement.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const filter = this.dataset.filter;
+                const section = this.closest('.page-section');
+                if (section) {
+                    section.querySelectorAll('[data-category]').forEach(card => { card.style.display = (filter === 'all' || card.dataset.category === filter) ? '' : 'none'; });
+                    section.querySelectorAll('.life-item').forEach(item => { item.style.display = (filter === 'all' || item.dataset.category === filter) ? '' : 'none'; });
+                }
+            });
+        });
+
+        // ===== 标签管理 =====
+        let currentTagContainer = null;
+        function openAddTagModal(containerId) { currentTagContainer = containerId; document.getElementById('newTagInput').value = ''; document.getElementById('addTagModal').classList.add('active'); setTimeout(() => document.getElementById('newTagInput').focus(), 100); }
+        function confirmAddTag() {
+            const name = document.getElementById('newTagInput').value.trim(); if (!name) return;
+            const container = document.getElementById(currentTagContainer);
+            const addBtn = container.querySelector('.add-tag-btn');
+            const newTag = document.createElement('button'); newTag.className = 'filter-tag'; newTag.dataset.filter = name.toLowerCase();
+            newTag.innerHTML = name + '<span class="tag-delete" onclick="deleteTag(event, this)">×</span>';
+            newTag.addEventListener('click', function(e) { if (e.target.classList.contains('tag-delete')) return; container.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active')); this.classList.add('active'); });
+            container.insertBefore(newTag, addBtn); closeModal('addTagModal');
+        }
+        function deleteTag(event, el) { event.stopPropagation(); const tag = el.parentElement; if (tag.classList.contains('active')) { tag.parentElement.querySelector('.filter-tag[data-filter="all"]').classList.add('active'); } tag.remove(); }
+        document.getElementById('newTagInput').addEventListener('keydown', e => { if (e.key === 'Enter') confirmAddTag(); });
+
+        // ===== 模态框 =====
+        document.getElementById('editProfileBtn').addEventListener('click', () => document.getElementById('editProfileModal').classList.add('active'));
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); }));
+
+        // ===== Obsidian 导入 =====
+        document.getElementById('obsidianImportBtn').addEventListener('click', () => document.getElementById('obsidianDropzone').classList.toggle('hidden'));
+        const dropzone = document.getElementById('dropzoneArea');
+        if (dropzone) {
+            dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+            dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); if (e.dataTransfer.files.length) alert('已选择 ' + e.dataTransfer.files.length + ' 个文件'); });
+            dropzone.addEventListener('click', () => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.md'; input.multiple = true; input.onchange = () => { if (input.files.length) alert('已选择 ' + input.files.length + ' 个文件'); }; input.click(); });
+        }
+
+        // ===== 设置面板 =====
+        document.getElementById('settingsBtn').addEventListener('click', () => { document.getElementById('settingsDrawer').classList.add('active'); document.getElementById('settingsOverlay').classList.add('active'); });
+        function closeSettings() { document.getElementById('settingsDrawer').classList.remove('active'); document.getElementById('settingsOverlay').classList.remove('active'); }
+
+        // ===== 颜色选择器功能 =====
+        const bgPicker = document.getElementById('bgColorPicker');
+        const bgHex = document.getElementById('bgColorHex');
+        const bgHSL = document.getElementById('bgColorHSL');
+        bgPicker.addEventListener('input', function() {
+            const c = this.value; bgHex.value = c;
+            document.body.style.background = c; document.body.style.setProperty('--bg-color', c);
+            bgHSL.value = hexToHSL(c);
+        });
+        function applyHexColor(hex) { if (/^#[0-9a-f]{6}$/i.test(hex)) { bgPicker.value = hex; document.body.style.background = hex; document.body.style.setProperty('--bg-color', hex); bgHSL.value = hexToHSL(hex); } }
+        function applyHSLColor(hsl) { try { const parts = hsl.split(','); const h = parseInt(parts[0]), s = parseInt(parts[1]), l = parseInt(parts[2]); const color = 'hsl('+h+','+s+'%,'+l+'%)'; document.body.style.background = color; } catch(e){} }
+        function hexToHSL(hex) { let r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255; const max = Math.max(r,g,b), min = Math.min(r,g,b); let h, s, l = (max+min)/2; if (max===min) { h=s=0; } else { const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min); switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;} } return Math.round(h*360)+','+Math.round(s*100)+'%,'+Math.round(l*100)+'%'; }
+
+        // 渐变色
+        const gc1 = document.getElementById('gradColor1'), gc2 = document.getElementById('gradColor2');
+        function updateGradPreview() { document.getElementById('gradientPreview').style.background = 'linear-gradient(135deg,'+gc1.value+','+gc2.value+')'; }
+        gc1.addEventListener('input', updateGradPreview); gc2.addEventListener('input', updateGradPreview);
+        document.getElementById('applyGradientBtn').addEventListener('click', () => { const grad = 'linear-gradient(135deg,'+gc1.value+','+gc2.value+')'; document.body.style.background = grad; });
+        document.getElementById('bgOpacitySlider').addEventListener('input', function() { document.getElementById('bgOpacityVal').textContent = this.value+'%'; document.body.style.opacity = this.value/100; });
+
+        // 壁纸
+        document.querySelectorAll('#wallpaperThumbs .wallpaper-thumb').forEach(thumb => {
+            thumb.addEventListener('click', function() { document.querySelectorAll('#wallpaperThumbs .wallpaper-thumb').forEach(t => t.classList.remove('active')); this.classList.add('active'); const wp = document.getElementById('bgWallpaper'); if (this.dataset.wallpaper === 'none') { wp.classList.remove('active'); wp.style.background = ''; } else { wp.style.background = this.dataset.wallpaper; wp.classList.add('active'); } });
+        });
+        // 卡片透明度
+        document.getElementById('opacitySlider').addEventListener('input', function() { document.getElementById('opacityValue').textContent = this.value+'%'; document.documentElement.style.setProperty('--card-opacity', this.value/100); });
+
+        // ===== 编辑模式功能 =====
+        let isEditMode = false;
+        const editBtn = document.getElementById('editLayoutBtn');
+        const editToolbar = document.getElementById('editToolbar');
+        const mainContent = document.getElementById('mainContent');
+
+        function toggleEditMode(enable) {
+            isEditMode = enable;
+            if (enable) { mainContent.classList.add('edit-mode'); editToolbar.classList.remove('hidden'); editBtn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 inline-block mr-1"></i>完成'; lucide.createIcons(); }
+            else { mainContent.classList.remove('edit-mode'); editToolbar.classList.add('hidden'); editBtn.innerHTML = '<i data-lucide="layout-grid" class="w-3.5 h-3.5 inline-block mr-1"></i>编辑'; lucide.createIcons(); }
+        }
+        editBtn.addEventListener('click', () => toggleEditMode(!isEditMode));
+        document.getElementById('saveLayoutBtn').addEventListener('click', () => { toggleEditMode(false); alert('布局已保存！'); });
+        document.getElementById('cancelEditBtn').addEventListener('click', () => toggleEditMode(false));
+        document.getElementById('addCardBtn').addEventListener('click', () => document.getElementById('addCardPanel').classList.add('active'));
+
+        // 卡片编辑操作
+        document.querySelectorAll('.card-edit-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const action = this.dataset.action;
+                const card = this.closest('.bento-card');
+                if (action === 'delete') { if (confirm('确定要删除这个卡片吗？')) { card.classList.add('card-removing'); setTimeout(() => card.remove(), 300); } }
+                if (action === 'resize') {
+                    let dd = this.parentElement.querySelector('.size-dropdown');
+                    if (!dd) { dd = document.createElement('div'); dd.className = 'size-dropdown'; dd.innerHTML = '<div class="size-option" data-size="1x1">1×1 小</div><div class="size-option" data-size="1x2">1×2 宽</div><div class="size-option" data-size="2x1">2×1 高</div><div class="size-option" data-size="2x2">2×2 大</div>'; this.parentElement.appendChild(dd); dd.querySelectorAll('.size-option').forEach(opt => { opt.addEventListener('click', function() { const s = this.dataset.size; card.classList.remove('md:col-span-2','md:row-span-2'); if (s==='1x2') card.classList.add('md:col-span-2'); else if (s==='2x1') card.classList.add('md:row-span-2'); else if (s==='2x2') { card.classList.add('md:col-span-2','md:row-span-2'); } dd.classList.remove('active'); }); }); }
+                    dd.classList.toggle('active');
+                }
+            });
+        });
+
+        // 添加新卡片
+        function addNewCard(type) {
+            const grid = document.getElementById('rightGrid'); if (!grid) return;
+            const card = document.createElement('div'); card.className = 'bento-card p-6'; card.dataset.card = 'custom-'+Date.now();
+            let content = '';
+            if (type==='text') content = '<p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-3">自定义文本</p><p class="text-sm text-white/60">在此输入你的内容...</p>';
+            else if (type==='image') content = '<div class="aspect-video rounded-xl bg-white/5 border border-white/10 flex items-center justify-center"><i data-lucide="image-plus" class="w-8 h-8 text-white/20"></i></div>';
+            else if (type==='link') content = '<p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-3">链接</p><a href="#" class="text-sm text-indigo-400/80 hover:text-indigo-400">https://example.com</a>';
+            else if (type==='stats') content = '<p class="text-xs text-white/30 uppercase tracking-wider font-medium mb-3">统计</p><div class="text-3xl font-bold text-white">1,234</div><p class="text-xs text-white/40 mt-1">总访问量</p>';
+            card.innerHTML = '<div class="card-edit-controls"><button class="card-edit-btn" data-action="resize" title="调整大小"><i data-lucide="maximize-2" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="move" title="移动"><i data-lucide="grip-vertical" class="w-3 h-3 text-white/70"></i></button><button class="card-edit-btn" data-action="delete" title="删除"><i data-lucide="x" class="w-3 h-3 text-white/70"></i></button></div>' + content;
+            grid.appendChild(card); document.getElementById('addCardPanel').classList.remove('active'); lucide.createIcons();
+            // Re-bindcard.querySelectorAll('.card-edit-btn').forEach(btn => { btn.addEventListener('click', function(e) { e.stopPropagation(); const action = this.dataset.action; const c = this.closest('.bento-card'); if (action==='delete') { if(confirm('确定删除？')){ c.classList.add('card-removing'); setTimeout(()=>c.remove(),300); } } }); });
+        }
+
+        // ===== 歌词区域拖拽手柄 =====
+        const lyricArea = document.getElementById('lyricArea');
+        const lyricHandle = document.getElementById('lyricResizeHandle');
+        let isResizing = false, startY = 0, startH = 0;
+        lyricHandle.addEventListener('mousedown', e => { isResizing = true; startY = e.clientY; startH = lyricArea.offsetHeight; document.body.style.cursor = 'ns-resize'; e.preventDefault(); });
+        document.addEventListener('mousemove', e => { if (!isResizing) return; const diff = e.clientY - startY; lyricArea.style.height = Math.max(30, Math.min(200, startH + diff)) + 'px'; });
+        document.addEventListener('mouseup', () => { if (isResizing) { isResizing = false; document.body.style.cursor = ''; } });
+
+        // ===== 主题切换 =====
+        document.getElementById('themeToggle').addEventListener('click', function() { document.documentElement.classList.toggle('dark'); const icon = this.querySelector('i'); icon.setAttribute('data-lucide', document.documentElement.classList.contains('dark') ? 'moon' : 'sun'); lucide.createIcons(); });
+
+        // ===== 个人信息字段显示/隐藏切换 =====
+        function toggleFieldVisibility(btn) {
+            const field = btn.closest('.profile-field');
+            const isHidden = field.classList.toggle('field-hidden');
+            const icon = btn.querySelector('i');
+            if (isHidden) {
+                field.style.opacity = '0.4';
+                field.querySelector('.flex-1').style.textDecoration = 'line-through';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                field.style.opacity = '1';
+                field.querySelector('.flex-1').style.textDecoration = 'none';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // 模态框中的显示/隐藏切换
+        function toggleModalFieldVisibility(fieldName, isVisible) {
+            const profileField = document.querySelector('#profileFieldsList .profile-field[data-field="' + fieldName + '"]');
+            if (profileField) {
+                if (isVisible) {
+                    profileField.style.display = 'flex';
+                    profileField.style.opacity = '1';
+                    profileField.querySelector('.flex-1').style.textDecoration = 'none';
+                    profileField.classList.remove('field-hidden');
+                    const icon = profileField.querySelector('.field-visibility-btn i');
+                    if (icon) icon.setAttribute('data-lucide', 'eye');
+                } else {
+                    profileField.style.opacity = '0.4';
+                    profileField.querySelector('.flex-1').style.textDecoration = 'line-through';
+                    profileField.classList.add('field-hidden');
+                    const icon = profileField.querySelector('.field-visibility-btn i');
+                    if (icon) icon.setAttribute('data-lucide', 'eye-off');
+                }
+                lucide.createIcons();
+            }
+        }
+
+        // ===== 添加自定义字段 =====
+        let customFieldCount = 0;
+        function addCustomField() {
+            customFieldCount++;
+            const fieldId = 'custom_' + Date.now();
+            const modalList = document.getElementById('modalFieldsList');
+            const newFieldHTML = '<div class="modal-field-item flex items-center gap-3" data-field="' + fieldId + '">' +
+                '<div class="flex-1">' +
+                    '<div class="flex gap-2 mb-1">' +
+                        '<input type="text" placeholder="标签名" class="w-20 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50">' +
+                        '<input type="text" placeholder="内容" class="flex-1 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500/50">' +
+                    '</div>' +
+                '</div>' +
+                '<label class="relative inline-flex items-center cursor-pointer">' +
+                    '<input type="checkbox" checked class="sr-only peer" onchange="toggleModalFieldVisibility(\'' + fieldId + '\', this.checked)">' +
+                    '<div class="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white/60 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500/50"></div>' +
+                '</label>' +
+                '<button onclick="removeCustomField(this)" class="w-5 h-5 flex items-center justify-center rounded hover:bg-red-500/20 transition-colors" title="删除字段"><i data-lucide="trash-2" class="w-3 h-3 text-red-400/60"></i></button>' +
+            '</div>';
+            modalList.insertAdjacentHTML('beforeend', newFieldHTML);
+            lucide.createIcons();
+        }
+
+        function removeCustomField(btn) {
+            const fieldItem = btn.closest('.modal-field-item');
+            const fieldId = fieldItem.dataset.field;
+            fieldItem.remove();
+            // 同时移除侧边栏中对应的字段
+            const profileField = document.querySelector('#profileFieldsList .profile-field[data-field="' + fieldId + '"]');
+            if (profileField) profileField.remove();
+        }
+
+        // ===== 保存个人信息修改 =====
+        function saveProfileChanges() {
+            // 获取模态框中的所有字段并更新侧边栏
+            const modalFields = document.querySelectorAll('#modalFieldsList .modal-field-item');
+            const profileFieldsList = document.getElementById('profileFieldsList');
+            
+            modalFields.forEach(mf => {
+                const fieldId = mf.dataset.field;
+                const input = mf.querySelector('input[type="text"]');
+                const isChecked = mf.querySelector('input[type="checkbox"]')?.checked ?? true;
+                let profileField = profileFieldsList.querySelector('.profile-field[data-field="' + fieldId + '"]');
+                
+                // 如果是自定义字段且侧边栏中不存在，则创建
+                if (!profileField && fieldId.startsWith('custom_')) {
+                    const inputs = mf.querySelectorAll('input[type="text"]');
+                    if (inputs.length >= 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
+                        const newHTML = '<div class="profile-field group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/3 transition-all" data-field="' + fieldId + '">' +
+                            '<i data-lucide="tag" class="w-3.5 h-3.5 text-indigo-400/60 flex-shrink-0"></i>' +
+                            '<span class="text-xs text-white/40 flex-shrink-0">' + inputs[0].value.trim() + '</span>' +
+                            '<span class="text-xs text-gray-300 flex-1">' + inputs[1].value.trim() + '</span>' +
+                            '<button class="field-visibility-btn opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-white/10" onclick="toggleFieldVisibility(this)" title="切换显示/隐藏"><i data-lucide="eye" class="w-3 h-3 text-white/40"></i></button>' +
+                        '</div>';
+                        profileFieldsList.insertAdjacentHTML('beforeend', newHTML);
+                        profileField = profileFieldsList.querySelector('.profile-field[data-field="' + fieldId + '"]');
+                    }
+                }
+                
+                // 更新字段内容
+                if (profileField && input) {
+                    const contentSpan = profileField.querySelector('.flex-1');
+                    if (contentSpan) contentSpan.textContent = input.value;
+                }
+                
+                // 更新可见性
+                if (profileField) {
+                    if (isChecked) {
+                        profileField.style.display = 'flex';
+                        profileField.style.opacity = '1';
+                        profileField.querySelector('.flex-1').style.textDecoration = 'none';
+                        profileField.classList.remove('field-hidden');
+                    } else {
+                        profileField.style.opacity = '0.4';
+                        profileField.querySelector('.flex-1').style.textDecoration = 'line-through';
+                        profileField.classList.add('field-hidden');
+                    }
+                }
+            });
+            lucide.createIcons();
+            closeModal('editProfileModal');
+        }
+    </script>
+</body>
+</html>

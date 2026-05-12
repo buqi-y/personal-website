@@ -1,0 +1,130 @@
+[
+  {
+    "id": "1",
+    "name": "Tailwind CSS",
+    "description": "Utility-first CSS 框架，快速构建现代网页界面",
+    "url": "https://tailwindcss.com",
+    "icon": "#06b6d4",
+    "category": "工具"
+  },
+  {
+    "id": "2",
+    "name": "Vercel",
+    "description": "最佳前端部署平台，与 Next.js 完美集成",
+    "url": "https://vercel.com",
+    "icon": "#000000",
+    "category": "工具"
+  },
+  {
+    "id": "3",
+    "name": "Figma",
+    "description": "协作设计工具，UI/UX 设计师的首选",
+    "url": "https://figma.com",
+    "icon": "#a259ff",
+    "category": "工具"
+  },
+  {
+    "id": "4",
+    "name": "Linear",
+    "description": "现代项目管理工具，极致的用户体验",
+    "url": "https://linear.app",
+    "icon": "#5e6ad2",
+    "category": "工具"
+  },
+  {
+    "id": "5",
+    "name": "深入理解 React Server Components",
+    "description": "Josh Comeau 详解 RSC 工作原理与最佳实践",
+    "url": "https://example.com",
+    "icon": "#61dafb",
+    "category": "文章"
+  },
+  {
+    "id": "6",
+    "name": "设计工程师的崛起",
+    "description": "探讨设计与工程交叉领域的新职业趋势",
+    "url": "https://example.com",
+    "icon": "#f43f5e",
+    "category": "文章"
+  },
+  {
+    "id": "7",
+    "name": "State of CSS 2024",
+    "description": "2024年 CSS 生态系统调查报告",
+    "url": "https://example.com",
+    "icon": "#8b5cf6",
+    "category": "文章"
+  },
+  {
+    "id": "8",
+    "name": "现代 Web 性能优化指南",
+    "description": "全面的 Web 性能优化策略与工具推荐",
+    "url": "https://example.com",
+    "icon": "#22c55e",
+    "category": "文章"
+  },
+  {
+    "id": "9",
+    "name": "Dribbble",
+    "description": "设计师作品分享平台，获取视觉灵感",
+    "url": "https://dribbble.com",
+    "icon": "#ea4c89",
+    "category": "灵感"
+  },
+  {
+    "id": "10",
+    "name": "Awwwards",
+    "description": "优秀网站设计评选，学习顶尖设计趋势",
+    "url": "https://awwwards.com",
+    "icon": "#2d2d2d",
+    "category": "灵感"
+  },
+  {
+    "id": "11",
+    "name": "Mobbin",
+    "description": "移动应用 UI 设计参考库，海量真实截图",
+    "url": "https://mobbin.com",
+    "icon": "#fbbf24",
+    "category": "灵感"
+  },
+  {
+    "id": "12",
+    "name": "Refactoring UI",
+    "description": "实用的 UI 设计技巧和原则",
+    "url": "https://refactoringui.com",
+    "icon": "#0ea5e9",
+    "category": "灵感"
+  },
+  {
+    "id": "13",
+    "name": "MDN Web Docs",
+    "description": "最权威的 Web 技术文档，前端开发必备",
+    "url": "https://developer.mozilla.org",
+    "icon": "#1e40af",
+    "category": "资源"
+  },
+  {
+    "id": "14",
+    "name": "GitHub",
+    "description": "代码托管与开源协作平台",
+    "url": "https://github.com",
+    "icon": "#333333",
+    "category": "资源"
+  },
+  {
+    "id": "15",
+    "name": "Stack Overflow",
+    "description": "开发者问答社区，解决编程难题",
+    "url": "https://stackoverflow.com",
+    "icon": "#f48024",
+    "category": "资源"
+  },
+  {
+    "id": "16",
+    "name": "Can I Use",
+    "description": "浏览器兼容性查询工具",
+    "url": "https://caniuse.com",
+    "icon": "#3c790a",
+    "category": "资源"
+  }
+]

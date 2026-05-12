@@ -1,0 +1,37 @@
+# ============================================
+# 注意：此文件仅作为配置参考文档
+# Serverless Framework v4 不支持腾讯云 SCF
+# 实际部署请使用：
+#   方式1: powershell deploy-scf.ps1（推荐）
+#   方式2: 腾讯云控制台手动上传
+# ============================================
+
+# 以下为腾讯云 SCF 配置参考（非可执行）
+component: scf
+name: personal-site-api
+app: personal-site
+
+inputs:
+  name: personal-site-api
+  src: ./
+  runtime: Nodejs18.15
+  region: ap-shanghai
+  handler: index.main_handler
+  memorySize: 128
+  timeout: 30
+  environment:
+    variables:
+      COS_SECRET_ID: ${env:COS_SECRET_ID}
+      COS_SECRET_KEY: ${env:COS_SECRET_KEY}
+      COS_REGION: ap-shanghai
+      COS_APPID: ${env:COS_APPID}
+      API_KEY: ${env:API_KEY}
+  events:
+    - apigw:
+        parameters:
+          protocols:
+            - https
+          endpoints:
+            - path: /api/{proxy+}
+              method: ANY
+              enableCORS: true
