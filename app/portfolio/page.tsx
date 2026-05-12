@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layers, ArrowUpRight, Calendar, Plus, Pencil, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { TagManager } from "@/components/shared/TagManager";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
+import { portfolioApi } from "@/lib/api";
 import portfolioData from "@/content/portfolio.json";
 
 interface Project {
@@ -143,6 +144,26 @@ export default function PortfolioPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newTech, setNewTech] = useState("");
 
+  // 从 API 拉取最新数据
+  useEffect(() => {
+    portfolioApi.get().then((data) => {
+      if (data && Array.isArray(data) && data.length > 0) {
+        const mapped: Project[] = data.map((item) => ({
+          id: item.id,
+          title: item.title || "",
+          description: item.description || "",
+          cover: item.image || "#6366f1",
+          techStack: item.tags || [],
+          category: "",
+          link: item.url || "",
+          date: item.date || "",
+        }));
+        setProjects(mapped);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filteredProjects = useMemo(() => {
     if (activeTag === "全部") return projects;
     return projects.filter((p) => p.category === activeTag);
@@ -174,17 +195,43 @@ export default function PortfolioPage() {
     if (!editingProject.title.trim()) return;
     setProjects((prev) => {
       const exists = prev.find((p) => p.id === editingProject.id);
+      let newProjects: Project[];
       if (exists) {
-        return prev.map((p) => (p.id === editingProject.id ? editingProject : p));
+        newProjects = prev.map((p) => (p.id === editingProject.id ? editingProject : p));
+      } else {
+        newProjects = [editingProject, ...prev];
       }
-      return [editingProject, ...prev];
+      // 同步到 API
+      portfolioApi.update(newProjects.map((p) => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        url: p.link,
+        image: p.cover,
+        tags: p.techStack,
+        date: p.date,
+      }))).catch((err) => console.warn('Sync failed:', err));
+      return newProjects;
     });
     setEditDialogOpen(false);
   };
 
   const handleDeleteConfirm = () => {
     if (deletingId) {
-      setProjects((prev) => prev.filter((p) => p.id !== deletingId));
+      setProjects((prev) => {
+        const newProjects = prev.filter((p) => p.id !== deletingId);
+        // 同步到 API
+        portfolioApi.update(newProjects.map((p) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          url: p.link,
+          image: p.cover,
+          tags: p.techStack,
+          date: p.date,
+        }))).catch((err) => console.warn('Sync failed:', err));
+        return newProjects;
+      });
     }
     setDeleteDialogOpen(false);
     setDeletingId(null);

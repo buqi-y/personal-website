@@ -39,8 +39,8 @@ async function upload(fileBuffer, filename, contentType) {
 
   await cosClient.putObject(BUCKET, key, fileBuffer, contentType);
 
-  // life 桶是私有桶，返回签名 URL
-  const url = await cosClient.getSignedUrl(BUCKET, key);
+  // 使用公开 URL，避免签名过期导致图片无法显示
+  const url = cosClient.getPublicUrl(BUCKET, key);
 
   return {
     key,

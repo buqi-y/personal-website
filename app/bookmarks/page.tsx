@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, ExternalLink, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { TagManager } from "@/components/shared/TagManager";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
+import { bookmarksApi } from "@/lib/api";
 import bookmarksData from "@/content/bookmarks.json";
 
 interface Bookmark {
@@ -52,6 +53,24 @@ export default function BookmarksPage() {
   const [editingBookmark, setEditingBookmark] = useState<Bookmark>(emptyBookmark);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // 从 API 拉取最新数据
+  useEffect(() => {
+    bookmarksApi.get().then((data) => {
+      if (data && Array.isArray(data) && data.length > 0) {
+        const mapped: Bookmark[] = data.map((item) => ({
+          id: item.id,
+          name: item.title || "",
+          description: item.description || "",
+          url: item.url || "",
+          icon: item.icon || "#6366f1",
+          category: item.category || "",
+        }));
+        setBookmarks(mapped);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filteredBookmarks = useMemo(() => {
     if (activeTag === "全部") return bookmarks;
     return bookmarks.filter((b) => b.category === activeTag);
@@ -81,17 +100,41 @@ export default function BookmarksPage() {
     if (!editingBookmark.name.trim()) return;
     setBookmarks((prev) => {
       const exists = prev.find((b) => b.id === editingBookmark.id);
+      let newBookmarks: Bookmark[];
       if (exists) {
-        return prev.map((b) => (b.id === editingBookmark.id ? editingBookmark : b));
+        newBookmarks = prev.map((b) => (b.id === editingBookmark.id ? editingBookmark : b));
+      } else {
+        newBookmarks = [editingBookmark, ...prev];
       }
-      return [editingBookmark, ...prev];
+      // 同步到 API
+      bookmarksApi.update(newBookmarks.map((b) => ({
+        id: b.id,
+        title: b.name,
+        url: b.url,
+        description: b.description,
+        icon: b.icon,
+        category: b.category,
+      }))).catch((err) => console.warn('Sync failed:', err));
+      return newBookmarks;
     });
     setEditDialogOpen(false);
   };
 
   const handleDeleteConfirm = () => {
     if (deletingId) {
-      setBookmarks((prev) => prev.filter((b) => b.id !== deletingId));
+      setBookmarks((prev) => {
+        const newBookmarks = prev.filter((b) => b.id !== deletingId);
+        // 同步到 API
+        bookmarksApi.update(newBookmarks.map((b) => ({
+          id: b.id,
+          title: b.name,
+          url: b.url,
+          description: b.description,
+          icon: b.icon,
+          category: b.category,
+        }))).catch((err) => console.warn('Sync failed:', err));
+        return newBookmarks;
+      });
     }
     setDeleteDialogOpen(false);
     setDeletingId(null);
