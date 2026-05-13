@@ -38,18 +38,25 @@ export default function LocalNoteDetail({ slug }: { slug: string }) {
     let cancelled = false;
 
     async function loadNote() {
+      let localFound: LocalNote | null = null;
+
       // 1. Try localStorage first
       try {
         const stored = localStorage.getItem("notes-items");
         if (stored) {
           const notes: LocalNote[] = JSON.parse(stored);
           const found = notes.find((n) => n.slug === slug);
-          if (found) {
+          if (found && found.content) {
+            // 本地有完整内容，直接使用
             if (!cancelled) {
               setNote(found);
               setLoading(false);
             }
             return;
+          }
+          // 本地有记录但没有 content，保留元数据继续从 API 拉取
+          if (found) {
+            localFound = found;
           }
         }
       } catch (e) {
@@ -64,18 +71,45 @@ export default function LocalNoteDetail({ slug }: { slug: string }) {
             slug: apiNote.slug,
             title: apiNote.title,
             date: apiNote.date,
-            category: (apiNote.tags && apiNote.tags[0]) || "随笔",
+            category: localFound?.category || (apiNote.tags && apiNote.tags[0]) || "随笔",
             tags: apiNote.tags || [],
-            summary: apiNote.description || "",
+            summary: apiNote.description || localFound?.summary || "",
             content: apiNote.content || "",
-            readingTime: `${Math.max(1, Math.ceil((apiNote.content || "").length / 500))} min read`,
-            source: "import",
-            isLocal: false,
+            readingTime: localFound?.readingTime || `${Math.max(1, Math.ceil((apiNote.content || "").length / 500))} min read`,
+            source: localFound?.source || "import",
+            isLocal: localFound?.isLocal ?? false,
           };
           setNote(mappedNote);
+
+          // 回写完整数据到 localStorage 以便下次直接读取（包括 content、tags、summary）
+          try {
+            const stored = localStorage.getItem("notes-items");
+            const notes: LocalNote[] = stored ? JSON.parse(stored) : [];
+            const idx = notes.findIndex((n) => n.slug === slug);
+            if (idx >= 0) {
+              notes[idx] = {
+                ...notes[idx],
+                content: apiNote.content || "",
+                tags: (apiNote.tags && apiNote.tags.length > 0) ? apiNote.tags : (notes[idx].tags || []),
+                summary: mappedNote.summary,
+              };
+            } else {
+              notes.push(mappedNote);
+            }
+            localStorage.setItem("notes-items", JSON.stringify(notes));
+          } catch (e) {
+            console.warn("Error updating localStorage with API content:", e);
+          }
+        } else if (!cancelled && localFound) {
+          // API 没有返回数据，但本地有元数据，显示元数据（内容为空）
+          setNote({ ...localFound, content: localFound.content || "" });
         }
       } catch (e) {
         console.warn("Error fetching note from API:", e);
+        // API 失败，但本地有元数据时仍然显示（无内容状态）
+        if (!cancelled && localFound) {
+          setNote({ ...localFound, content: localFound.content || "" });
+        }
       }
 
       if (!cancelled) {

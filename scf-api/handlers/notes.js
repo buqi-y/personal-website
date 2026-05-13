@@ -45,6 +45,7 @@ async function put(slug, data) {
     slug: noteData.slug,
     date: noteData.date,
     tags: noteData.tags || [],
+    description: noteData.description || '',
   };
 
   if (existingIndex >= 0) {

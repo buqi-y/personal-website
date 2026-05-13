@@ -135,11 +135,32 @@ function getPublicUrl(bucket, key) {
   return `https://${getBucketName(bucket)}.cos.${Region}.myqcloud.com/${key}`;
 }
 
+/**
+ * 获取 COS 对象原始数据（用于代理图片等二进制文件）
+ * @param {string} bucket - 桶名前缀
+ * @param {string} key - 对象键
+ * @returns {Promise<{buffer: Buffer, contentType: string}>}
+ */
+async function getObjectRaw(bucket, key) {
+  const result = await cos.getObject({
+    Bucket: getBucketName(bucket),
+    Region,
+    Key: key,
+    DataType: 'buffer',
+  });
+  const contentType = result.headers && result.headers['content-type']
+    ? result.headers['content-type']
+    : 'application/octet-stream';
+  const buffer = Buffer.isBuffer(result.Body) ? result.Body : Buffer.from(result.Body);
+  return { buffer, contentType };
+}
+
 module.exports = {
   getObject,
   putObject,
   deleteObject,
   getSignedUrl,
   getPublicUrl,
+  getObjectRaw,
   getBucketName,
 };

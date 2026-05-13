@@ -1,4 +1,4 @@
-# 腾讯云 SCF 云函数部署脚本
+﻿# 腾讯云 SCF 云函数部署脚本
 # 前置要求：pip install tccli && tccli configure
 param(
     [string]$FunctionName = "personal-site-api",

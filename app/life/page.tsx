@@ -111,6 +111,14 @@ function getImageSrc(img: string | LifeImage): string | null {
       // URL 解析失败则保持原值
     }
   }
+  // 将 COS 直链转为 SCF 代理 URL（解决 CORS 和 2024 下载限制）
+  if (src.includes("personal-site-life") && src.includes(".cos.")) {
+    const match = src.match(/personal-site-life[^/]*\.cos\.[^/]+\/(.+)/);
+    if (match) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      return `${apiBase}/api/life/image/${match[1]}`;
+    }
+  }
   return src;
 }
 

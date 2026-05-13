@@ -39,18 +39,31 @@ async function upload(fileBuffer, filename, contentType) {
 
   await cosClient.putObject(BUCKET, key, fileBuffer, contentType);
 
-  // 使用公开 URL，避免签名过期导致图片无法显示
+  // 返回公开 URL 和代理 URL
   const url = cosClient.getPublicUrl(BUCKET, key);
+  const proxyUrl = `/api/life/image/${key}`;
 
   return {
     key,
     url,
+    proxyUrl,
     filename: `${uuid}${ext}`,
   };
+}
+
+/**
+ * 代理获取图片（解决 CORS 和 COS 2024 下载限制）
+ * @param {string} key - 图片在 COS 中的 key
+ * @returns {Promise<object>} { buffer, contentType }
+ */
+async function getImage(key) {
+  const result = await cosClient.getObjectRaw(BUCKET, key);
+  return result;
 }
 
 module.exports = {
   list,
   update,
   upload,
+  getImage,
 };

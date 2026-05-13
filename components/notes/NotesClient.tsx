@@ -66,19 +66,38 @@ export function NotesClient({ notes: serverNotes, categories }: NotesClientProps
     notesApi.list().then((apiNotes) => {
       if (apiNotes && Array.isArray(apiNotes) && apiNotes.length > 0) {
         setLocalNotes((prevLocal) => {
-          const apiMapped: NoteItem[] = apiNotes.map((n) => ({
-            slug: n.slug,
-            title: n.title,
-            date: n.date,
-            tags: n.tags || [],
-            description: n.description,
-            category: "",
-            summary: n.description || "",
-            readingTime: "",
-            isLocal: true,
-            source: "local" as const,
-          }));
-          // 合并逻辑：API 中有的更新，本地有但 API 没有的保留
+          // 构建本地笔记 slug -> note 映射，用于保留 content 等字段
+          const localMap = new Map(prevLocal.map((n) => [n.slug, n]));
+          const apiMapped: NoteItem[] = apiNotes.map((n) => {
+            const existing = localMap.get(n.slug);
+            // 如果本地已有完整数据（含 content），优先保留本地版本，仅更新元数据
+            if (existing && existing.content) {
+              // API list 不包含 content，绝不能用 API 数据覆盖本地 content
+              // tags: 只有当 API 返回非空 tags 时才更新，避免空数组覆盖本地标签
+              return {
+                ...existing,
+                title: n.title || existing.title,
+                date: n.date || existing.date,
+                tags: (n.tags && n.tags.length > 0) ? n.tags : (existing.tags || []),
+                summary: n.description || existing.summary || "",
+                isLocal: true,
+              };
+            }
+            // 本地无 content：保留本地已有字段，API list 数据仅补充元数据
+            return {
+              slug: n.slug,
+              title: n.title || existing?.title || "",
+              date: n.date || existing?.date || "",
+              tags: (n.tags && n.tags.length > 0) ? n.tags : (existing?.tags || []),
+              category: existing?.category || "",
+              summary: n.description || existing?.summary || "",
+              readingTime: existing?.readingTime || "",
+              content: existing?.content || "",  // 保留本地已有的 content，确保不为 undefined
+              isLocal: true,
+              source: existing?.source || ("local" as const),
+            };
+          });
+          // 合并逻辑：API 中有的更新（保留本地 content），本地有但 API 没有的保留
           const apiSlugs = new Set(apiMapped.map((n) => n.slug));
           const localOnly = prevLocal.filter((n) => !apiSlugs.has(n.slug));
           const merged = [...apiMapped, ...localOnly];

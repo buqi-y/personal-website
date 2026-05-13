@@ -254,6 +254,29 @@ async function routeRequest(method, reqPath, event, headers) {
     return success(data);
   }
 
+  // Life 图片代理路由（解决 CORS 和 COS 2024 下载限制）
+  if (apiPath.match(/^\/life\/image\/.+/) && method === 'GET') {
+    const key = decodeURIComponent(apiPath.replace(/^\/life\/image\//, ''));
+    try {
+      const { buffer, contentType } = await lifeHandler.getImage(key);
+      return {
+        isBase64Encoded: true,
+        statusCode: 200,
+        headers: {
+          ...CORS_HEADERS,
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400',
+        },
+        body: buffer.toString('base64'),
+      };
+    } catch (err) {
+      if (err.statusCode === 404 || err.code === 'NoSuchKey') {
+        return error('Image not found', 404);
+      }
+      throw err;
+    }
+  }
+
   // Bookmarks 路由
   if (apiPath === '/bookmarks' && method === 'GET') {
     const data = await bookmarksHandler.get();
