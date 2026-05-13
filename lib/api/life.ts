@@ -16,7 +16,12 @@ export const lifeApi = {
     formData.append('file', file);
     const result = await apiPost<{ url: string; proxyUrl: string }>('/api/life/upload', formData);
     // 优先使用代理 URL（解决 CORS 和 COS 2024 下载限制）
-    return result.proxyUrl || result.url;
+    // proxyUrl 是相对路径（如 /api/life/image/images/xxx.jpg），需要加上 API 基础地址
+    if (result.proxyUrl) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      return `${apiBase}${result.proxyUrl}`;
+    }
+    return result.url;
   },
   /** 将 COS 公开 URL 转为代理 URL */
   getProxyUrl: (src: string): string => {

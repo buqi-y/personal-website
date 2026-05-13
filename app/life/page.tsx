@@ -119,6 +119,11 @@ function getImageSrc(img: string | LifeImage): string | null {
       return `${apiBase}/api/life/image/${match[1]}`;
     }
   }
+  // 修复历史数据：旧版上传存储了相对路径 /api/life/image/...，需补全 API 基础地址
+  if (src.startsWith('/api/life/image/')) {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+    return `${apiBase}${src}`;
+  }
   return src;
 }
 

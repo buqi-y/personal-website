@@ -1,5 +1,6 @@
 'use strict';
 
+const Busboy = require('busboy');
 const { verifyAuth } = require('./utils/auth');
 const notesHandler = require('./handlers/notes');
 const lifeHandler = require('./handlers/life');
@@ -42,53 +43,38 @@ function error(message, statusCode = 400) {
 }
 
 /**
- * 解析 multipart/form-data
+ * 解析 multipart/form-data（使用 busboy 进行二进制安全解析）
  * @param {Buffer} bodyBuffer - 请求体 Buffer
- * @param {string} boundary - boundary 字符串
- * @returns {object} { file: { buffer, filename, contentType }, fields: {} }
+ * @param {string} contentType - 完整的 Content-Type 头
+ * @returns {Promise<object>} { file: { buffer, filename, contentType }, fields: {} }
  */
-function parseMultipart(bodyBuffer, boundary) {
-  const result = { file: null, fields: {} };
-  const boundaryBuffer = Buffer.from(`--${boundary}`);
-  const parts = [];
+function parseMultipart(bodyBuffer, contentType) {
+  return new Promise((resolve, reject) => {
+    const result = { file: null, fields: {} };
+    const bb = Busboy({ headers: { 'content-type': contentType } });
 
-  let start = 0;
-  while (true) {
-    const idx = bodyBuffer.indexOf(boundaryBuffer, start);
-    if (idx === -1) break;
-    if (start > 0) {
-      // 去掉前面的 \r\n 和后面的 \r\n
-      let partEnd = idx - 2; // 去掉 \r\n
-      if (partEnd > start) {
-        parts.push(bodyBuffer.slice(start, partEnd));
-      }
-    }
-    start = idx + boundaryBuffer.length + 2; // 跳过 boundary + \r\n
-  }
+    bb.on('file', (fieldname, file, info) => {
+      const chunks = [];
+      file.on('data', (chunk) => chunks.push(chunk));
+      file.on('end', () => {
+        result.file = {
+          buffer: Buffer.concat(chunks),
+          filename: info.filename,
+          contentType: info.mimeType,
+        };
+      });
+    });
 
-  for (const part of parts) {
-    const headerEnd = part.indexOf('\r\n\r\n');
-    if (headerEnd === -1) continue;
+    bb.on('field', (fieldname, value) => {
+      result.fields[fieldname] = value;
+    });
 
-    const headerStr = part.slice(0, headerEnd).toString('utf-8');
-    const body = part.slice(headerEnd + 4);
+    bb.on('finish', () => resolve(result));
+    bb.on('error', reject);
 
-    const nameMatch = headerStr.match(/name="([^"]+)"/);
-    const filenameMatch = headerStr.match(/filename="([^"]+)"/);
-    const contentTypeMatch = headerStr.match(/Content-Type:\s*(.+)/i);
-
-    if (filenameMatch) {
-      result.file = {
-        buffer: body,
-        filename: filenameMatch[1],
-        contentType: contentTypeMatch ? contentTypeMatch[1].trim() : 'application/octet-stream',
-      };
-    } else if (nameMatch) {
-      result.fields[nameMatch[1]] = body.toString('utf-8').trim();
-    }
-  }
-
-  return result;
+    bb.write(bodyBuffer);
+    bb.end();
+  });
 }
 
 /**
@@ -115,15 +101,6 @@ function parseJsonBody(event) {
   } catch (e) {
     return {};
   }
-}
-
-/**
- * 从 Content-Type 头中提取 boundary
- */
-function getBoundary(contentType) {
-  if (!contentType) return null;
-  const match = contentType.match(/boundary=(?:"([^"]+)"|([^\s;]+))/i);
-  return match ? match[1] || match[2] : null;
 }
 
 /**
@@ -237,13 +214,12 @@ async function routeRequest(method, reqPath, event, headers) {
 
   if (apiPath === '/life/upload' && method === 'POST') {
     const contentType = headers['content-type'] || headers['Content-Type'] || '';
-    const boundary = getBoundary(contentType);
-    if (!boundary) return error('Missing multipart boundary');
+    if (!contentType.includes('multipart/form-data')) return error('Missing multipart boundary');
 
     const bodyBuffer = getBodyBuffer(event);
     if (!bodyBuffer) return error('Empty request body');
 
-    const parsed = parseMultipart(bodyBuffer, boundary);
+    const parsed = await parseMultipart(bodyBuffer, contentType);
     if (!parsed.file) return error('No file found in request');
 
     const data = await lifeHandler.upload(
@@ -316,13 +292,12 @@ async function routeRequest(method, reqPath, event, headers) {
   // Media 路由
   if (apiPath === '/media/upload' && method === 'POST') {
     const contentType = headers['content-type'] || headers['Content-Type'] || '';
-    const boundary = getBoundary(contentType);
-    if (!boundary) return error('Missing multipart boundary');
+    if (!contentType.includes('multipart/form-data')) return error('Missing multipart boundary');
 
     const bodyBuffer = getBodyBuffer(event);
     if (!bodyBuffer) return error('Empty request body');
 
-    const parsed = parseMultipart(bodyBuffer, boundary);
+    const parsed = await parseMultipart(bodyBuffer, contentType);
     if (!parsed.file) return error('No file found in request');
 
     const folder = parsed.fields.folder || 'wallpapers';
