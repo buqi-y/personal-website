@@ -58,6 +58,17 @@ const defaultFields: ProfileField[] = [
 ];
 
 const LS_KEY_AVATAR = "custom-avatar";
+const LS_KEY_PROFILE_INFO = "profile-info";
+
+const DEFAULT_NAME = "张三";
+const DEFAULT_TITLE = "全栈开发者 / 设计师";
+const DEFAULT_BIO = "热爱创造美好的数字体验";
+
+interface ProfileInfo {
+  name: string;
+  title: string;
+  bio: string;
+}
 
 const compressAvatar = (file: File, maxWidth: number = 200): Promise<string> => {
   return new Promise((resolve) => {
@@ -87,9 +98,28 @@ export function ProfileCard() {
   const [customAvatar, setCustomAvatar] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  // Profile info state (name, title, bio)
+  const [profileInfo, setProfileInfo] = useState<ProfileInfo>({
+    name: DEFAULT_NAME,
+    title: DEFAULT_TITLE,
+    bio: DEFAULT_BIO,
+  });
+  const [editInfo, setEditInfo] = useState<ProfileInfo>(profileInfo);
+
   useEffect(() => {
     const stored = localStorage.getItem(LS_KEY_AVATAR);
     if (stored) setCustomAvatar(stored);
+
+    const infoStored = localStorage.getItem(LS_KEY_PROFILE_INFO);
+    if (infoStored) {
+      try {
+        const parsed = JSON.parse(infoStored) as ProfileInfo;
+        setProfileInfo(parsed);
+        setEditInfo(parsed);
+      } catch {
+        // ignore
+      }
+    }
   }, []);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,11 +139,14 @@ export function ProfileCard() {
 
   const openEdit = () => {
     setEditFields([...fields]);
+    setEditInfo({ ...profileInfo });
     setDialogOpen(true);
   };
 
   const saveEdit = () => {
     setFields([...editFields]);
+    setProfileInfo({ ...editInfo });
+    localStorage.setItem(LS_KEY_PROFILE_INFO, JSON.stringify(editInfo));
     setDialogOpen(false);
   };
 
@@ -186,9 +219,9 @@ export function ProfileCard() {
             onChange={handleAvatarUpload}
           />
         </div>
-        <h2 className="text-xl font-bold">张三</h2>
-        <p className="text-sm text-muted-foreground">全栈开发者 / 设计师</p>
-        <p className="text-sm text-muted-foreground mt-2">热爱创造美好的数字体验</p>
+        <h2 className="text-xl font-bold">{profileInfo.name}</h2>
+        <p className="text-sm text-muted-foreground">{profileInfo.title}</p>
+        <p className="text-sm text-muted-foreground mt-2">{profileInfo.bio}</p>
       </div>
 
       {/* Divider */}
@@ -239,6 +272,38 @@ export function ProfileCard() {
             <DialogTitle>编辑个人信息</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* 基本信息编辑 */}
+            <div className="space-y-2 pb-3 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-12 shrink-0">姓名</span>
+                <Input
+                  value={editInfo.name}
+                  onChange={(e) => setEditInfo({ ...editInfo, name: e.target.value })}
+                  placeholder="你的名字"
+                  className="text-xs h-7"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-12 shrink-0">头衔</span>
+                <Input
+                  value={editInfo.title}
+                  onChange={(e) => setEditInfo({ ...editInfo, title: e.target.value })}
+                  placeholder="例如：全栈开发者 / 设计师"
+                  className="text-xs h-7"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-12 shrink-0">签名</span>
+                <Input
+                  value={editInfo.bio}
+                  onChange={(e) => setEditInfo({ ...editInfo, bio: e.target.value })}
+                  placeholder="一句话介绍自己"
+                  className="text-xs h-7"
+                />
+              </div>
+            </div>
+
+            {/* 信息字段编辑 */}
             {editFields.map((field) => (
               <div key={field.id} className="flex items-center gap-2">
                 <div className="flex-1 space-y-1">
